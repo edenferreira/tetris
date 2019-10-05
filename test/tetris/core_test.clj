@@ -62,40 +62,44 @@
                                :width 10
                                :piece [{:x 0 :y 23}
                                        {:x 1 :y 23}]
+                               :next-piece [{:x 0 :y 0}
+                                            {:x 1 :y 0}]
                                :filled-blocks []}
-                              :down
-                              [{:x 0 :y 0}
-                               {:x 1 :y 0}])))
+                              :down)))
 
   (is (= {:height 24
           :width 10
           :piece [{:x 1 :y 23}
                   {:x 2 :y 23}]
+          :next-piece [{:x 0 :y 0}
+                       {:x 1 :y 0}]
           :filled-blocks []}
          (tetris/update-board {:height 24
                                :width 10
                                :piece [{:x 0 :y 23}
                                        {:x 1 :y 23}]
+                               :next-piece [{:x 0 :y 0}
+                                            {:x 1 :y 0}]
                                :filled-blocks []}
-                              :right
-                              [{:x 0 :y 0}
-                               {:x 1 :y 0}])))
+                              :right)))
 
   (is (= {:height 24
           :width 10
           :piece [{:x 4 :y 1}
                   {:x 5 :y 1}]
+          :next-piece [{:x 0 :y 0}
+                       {:x 0 :y 1}]
           :filled-blocks [{:x 0 :y 23}
                           {:x 1 :y 23}]}
          (tetris/update-board {:height 24
                                :width 10
                                :piece [{:x 4 :y 0}
                                        {:x 5 :y 0}]
+                               :next-piece [{:x 0 :y 0}
+                                            {:x 0 :y 1}]
                                :filled-blocks [{:x 0 :y 23}
                                                {:x 1 :y 23}]}
-                              :down
-                              [{:x 0 :y 0}
-                               {:x 0 :y 1}])))
+                              :down)))
 
   (is (= {:height 24
           :width 10
@@ -109,24 +113,26 @@
                                :width 10
                                :piece [{:x 1 :y 22}
                                        {:x 2 :y 22}]
+                               :next-piece [{:x 0 :y 0}
+                                            {:x 0 :y 1}]
                                :filled-blocks [{:x 0 :y 23}
                                                {:x 1 :y 23}]}
-                              :down
-                              [{:x 0 :y 0}
-                               {:x 0 :y 1}])))
+                              :down)))
 
   (is (= {:height 24
           :width 10
           :piece [{:x 8 :y 21}
                   {:x 9 :y 21}]
+          :next-piece [{:x 0 :y 0}
+                       {:x 0 :y 1}]
           :filled-blocks [{:x 0 :y 23}
                           {:x 1 :y 23}]}
          (tetris/update-board {:height 24
                                :width 10
                                :piece [{:x 8 :y 21}
                                        {:x 9 :y 21}]
+                               :next-piece [{:x 0 :y 0}
+                                            {:x 0 :y 1}]
                                :filled-blocks [{:x 0 :y 23}
                                                {:x 1 :y 23}]}
-                              :right
-                              [{:x 0 :y 0}
-                               {:x 0 :y 1}]))))
+                              :right))))
