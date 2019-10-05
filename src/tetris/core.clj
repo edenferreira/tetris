@@ -154,6 +154,13 @@
           size
           size))
 
+(defn draw-rects! [size positions]
+  (doseq [[x y] positions]
+    (q/rect (* x size)
+            (* y size)
+            size
+            size)))
+
 (defn draw-board! [board size]
   (run! (part-> draw-one!
                 board
@@ -171,19 +178,6 @@
             right right right right right
             right right right right right
             right right right)))
-
-(defn setup []
-  ; Set frame rate to 30 frames per second.
-  (q/frame-rate 60)
-  ; Set color mode to HSB (HSV) instead of default RGB.
-  (q/color-mode :hsb)
-  ; setup function returns initial state. It contains
-  ; circle color and position.
-  {:board (assoc (add-piece board
-                            (random-piece))
-                 :next-piece (random-piece))
-   :speed-x 1
-   :frame 0})
 
 (defn target-frame [speed-x]
   (-> 60 (/ speed-x) Math/abs))
@@ -214,27 +208,104 @@
                 (random-piece))
       new-state)))
 
+(defn call-times [f]
+  (fn [n x]
+    (loop [c 0
+           v x]
+      (if (< c n)
+        (recur (inc c)
+               (f v))
+        v))))
+(def repeat-down (call-times down))
+(def repeat-right (call-times right))
+
+(def base-state
+  {:state :ticking-away
+   :filled-blocks []
+   :board-height 24
+   :board-width 10
+   :board-x 5
+   :board-y 5
+   :current-piece []
+   :next-pieces [[]]
+   :piece-generator random-piece
+   :ticks-per-second 1
+   :size 15})
+
+(defn setup []
+  (q/frame-rate 60)
+  (q/color-mode :hsb)
+  (-> base-state
+      (assoc :filled-blocks
+             (for [x (range 8)
+                   y (range 20 24)]
+               {:x x :y y}))
+      (assoc :current-piece (repeat-right 4 l-shape))
+      (assoc :next-pieces [t-shape
+                           block-shape
+                           z-shape
+                           s-shape])))
+
+;; shapes should be a calculation, and not defined
 (defn draw-state [state]
-  (let [board (:board state)
-        size 15]
-    (q/background 240)
-    (q/fill 220 200 100)
-    #_(doseq [y (range (:height board))
-            x (range (:width board))
-            :let [x (+ (:x board)
-                       x)
-                  y (+ (:y board)
-                       y)]]
-      (q/rect (* size x)
-              (* size y)
-              size
-              size))
-    (run! (part-> draw-one!
-                  board
-                  size)
-          (board-blocks board))
-    (q/fill 220 200 255)
-    (draw-board! board size)))
+
+  (q/background 240)
+  (q/fill 220 200 100)
+
+  ;; draw board
+  (->> (for [x (range (:board-width state))
+             y (range (:board-height state))
+             :let [x (+ x (:board-x state))
+                   y (+ y (:board-y state))]]
+         [x y])
+       (draw-rects! (:size state)))
+
+  (q/fill 220 200 240)
+
+  ;; draw next pieces
+  (-> (:next-pieces state)
+      vec
+      (update 0
+              (comp (partial repeat-right 12)
+                    (partial repeat-down 1)))
+      (update 1
+              (comp (partial repeat-right 12)
+                    (partial repeat-down 6)))
+      (update 2
+              (comp (partial repeat-right 12)
+                    (partial repeat-down 11)))
+      (update 3
+              (comp (partial repeat-right 12)
+                    (partial repeat-down 16)))
+      (->> (apply concat)
+           (map (juxt (comp (partial +
+                                     (:board-x state))
+                            :x)
+                      (comp (partial +
+                                     (:board-y state))
+                            :y)))
+           (draw-rects! (:size state))))
+
+  ;; draw current piece
+
+  (->> (:current-piece state)
+       (map (juxt (comp (partial +
+                                 (:board-x state))
+                        :x)
+                  (comp (partial +
+                                 (:board-y state))
+                        :y)))
+       (draw-rects! (:size state)))
+
+  ;; draw filled blocks
+  (->> (:filled-blocks state)
+       (map (juxt (comp (partial +
+                                 (:board-x state))
+                        :x)
+                  (comp (partial +
+                                 (:board-y state))
+                        :y)))
+       (draw-rects! (:size state))))
 
 (defn main []
   (q/defsketch tetris
@@ -243,9 +314,10 @@
     ; setup function called only once, during sketch initialization.
     :setup setup
     ; update-state is called on each iteration before draw-state.
-    :update update-state
+    :update identity
     :draw draw-state
     :features [:keep-on-top]
+    #_#_
     :key-pressed
     (fn [{:keys [next-piece]
           :as state}
