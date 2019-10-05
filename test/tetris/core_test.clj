@@ -103,8 +103,8 @@
 
   (is (= {:height 24
           :width 10
-          :piece [{:x 4 :y 0}
-                  {:x 4 :y 1}]
+          :piece [{:x 4 :y -1}
+                  {:x 4 :y 0}]
           :filled-blocks [{:x 0 :y 23}
                           {:x 1 :y 23}
                           {:x 1 :y 22}
