@@ -3,14 +3,6 @@
             [quil.middleware :as m]
             [clojure.set :as set]))
 
-(def insert-second
-  (comp
-    (partial apply concat)
-    (juxt (comp vector ffirst)
-          (comp vector second)
-          (comp rest first))
-    vector))
-
 (def insert-first
   (comp
     (partial apply concat)
@@ -19,19 +11,9 @@
     reverse
     vector))
 
-(def part->
-  (comp
-    (partial partial
-             (comp (partial apply apply)
-                   (juxt first rest)
-                   (partial apply concat)
-                   (partial apply insert-second)
-                   (juxt first
-                         (comp vector second))
-                   vector))
-    (juxt (comp vector first)
-          rest)
-    vector))
+(defn part-> [f & args]
+  (fn [m]
+    (apply f m args)))
 
 (def o (comp (partial zipmap [:x :y]) vector))
 
@@ -51,23 +33,24 @@
 (def s-shape [(o 0 1) (o 1 1) (o 1 0) (o 2 0)])
 (def i-shape [(o 0 0) (o 0 1) (o 0 2) (o 0 3)])
 (def block-shape [(o 0 0) (o 1 0) (o 1 1) (o 0 1)])
+(defn random-piece []
+  (rand-nth [l-shape
+             mirror-l-shape
+             t-shape
+             z-shape
+             s-shape
+             i-shape
+             block-shape]))
 
-(def collision? (comp not-empty
-                      (partial apply set/intersection)
-                      (partial map set)
-                      vector))
+(defn collision? [positions1 positions2]
+  (seq
+    (set/intersection (set positions1)
+                      (set positions2))))
 
-(def x-inside?
-  (comp (every-pred (comp (partial apply <)
-                          (juxt (comp (partial apply max)
-                                      (partial map :x)
-                                      second)
-                                (comp :width first)))
-                    (comp (partial <= 0)
-                          (partial apply min)
-                          (partial map :x)
-                          second))
-        vector))
+(defn inside? [positions1 positions2]
+  (= (set/intersection (set positions1)
+                       (set positions2))
+     (set positions1)))
 
 (def y-inside?
   (comp (every-pred (comp (partial apply <)
@@ -82,12 +65,6 @@
                           second))
         vector))
 
-(def inside?
-  (comp
-    (every-pred (partial apply x-inside?)
-                (partial apply y-inside?))
-    vector))
-
 (def board
   {:height 24
    :width 10
@@ -96,20 +73,43 @@
    :piece []
    :filled-blocks []})
 
-(def add-piece
-  (comp
-    (partial apply apply)
-    (part-> insert-first assoc)
-    (partial vector)
-    (part-> insert-second :piece)
-    (juxt first
-          (comp right right right right
-                second))
-    vector))
+(defn board-blocks [{:keys [height width]}]
+  (for [y (range height)
+        x (range width)]
+    {:x x :y y}))
 
-(def twice
-  (comp (partial take 2)
-        repeat))
+(defn add-piece [board piece]
+  (assoc board
+         :piece (-> piece
+                    right
+                    right
+                    right
+                    right)))
+
+(defn update-board [board move next-piece]
+  (let [move-fn (case move
+                  :down down
+                  :right right
+                  :left left)]
+    (cond
+      (and (= :down move)
+           (or (collision? (move-fn (:piece board))
+                           (:filled-blocks board))
+               (not (inside? (move-fn (:piece board))
+                             (board-blocks board)))))
+      (-> board
+          (update :filled-blocks concat (:piece board))
+          (add-piece next-piece))
+
+      (or (collision? (move-fn (:piece board))
+                      (:filled-blocks board))
+          (not (inside? (move-fn (:piece board))
+                        (board-blocks board))))
+      board
+
+      :else
+      (-> board
+          (update :piece move-fn)))))
 
 (defn draw-one! [{:keys [x y]}
                  {board-x :x board-y :y}
@@ -178,13 +178,14 @@
         (update :board add-piece l-shape)
         non-frame)))
 
-(def down-piece (partial move-piece down))
-
 (defn update-state [{:keys [frame speed-x]
                      :as state}]
   (if (>= frame
           (- (target-frame speed-x) 1))
-    (down-piece state)
+    (-> state
+        (update :board
+          update-board :down (random-piece))
+        non-frame)
     (non-frame state)))
 
 (defn draw-state [state]
@@ -214,16 +215,16 @@
     :update update-state
     :draw draw-state
     :features [:keep-on-top]
-    :key-pressed (fn [state key]
-                   (prn key)
-                   (prn (q/key-as-keyword))
-                   (case (q/key-as-keyword)
-                     :right (move-piece right state)
-                     :left (move-piece left state)
-                     :down (move-piece down state)
-                     state))
+    :key-pressed
+    (fn [state {:keys [key]}]
+      (if (#{:right :left :down} key)
+        (update state
+                :board
+                update-board key (random-piece))
+        state))
     ; This sketch uses functional-mode middleware.
     ; Check quil wiki for more info about middlewares and particularly
     ; fun-mode.
     :middleware [m/fun-mode]))
+
 (main)
