@@ -52,20 +52,8 @@
           [{:x 2 :y 2} {:x 2 :y 4} {:x 2 :y 1} {:x 2 :y 1}]))))
 
 (def base-state
-  {:state :ticking-away
-   :filled-blocks []
-   :board-height 24
-   :board-width 10
-   :board-x 5
-   :board-y 5
-   :current-piece []
-   :next-pieces [[]]
-   :piece-generator identity
-   :ticks-per-second 1
-   :current-frame 1
-   :flashes-before-merging 2
-   :frame-rate 60
-   :size 15})
+  (assoc tetris/base-state
+         :piece-generator identity) )
 
 (deftest tick
   (is (= (assoc base-state
@@ -116,6 +104,7 @@
     (is (= (assoc base-state
                   :state :flashing-for-merge
                   :flashing-before-merge 1
+                  :current-flashing-frame 0
                   :filled-blocks (for [x (range 10)
                                        y (range 22 24)]
                                    {:x x :y y})
@@ -132,12 +121,14 @@
     (is (= (assoc base-state
                   :state :flashing-for-merge
                   :flashing-before-merge 2
+                  :current-flashing-frame 0
                   :filled-blocks []
                   :merging-lines [22 23])
            (tetris/tick
              (assoc base-state
                     :state :flashing-for-merge
                     :flashing-before-merge 1
+                    :current-flashing-frame 3
                     :filled-blocks (for [x (range 10)
                                          y (range 22 24)]
                                      {:x x :y y})
@@ -146,6 +137,7 @@
     (is (= (assoc base-state
                   :state :flashing-for-merge
                   :flashing-before-merge 3
+                  :current-flashing-frame 0
                   :filled-blocks
                   (concat (for [x (range 9)
                                 y (range 20 22)]
@@ -158,6 +150,7 @@
              (assoc base-state
                     :state :flashing-for-merge
                     :flashing-before-merge 2
+                    :current-flashing-frame 3
                     :filled-blocks (for [x (range 9)
                                          y (range 20 22)]
                                      {:x x :y y})
@@ -166,6 +159,7 @@
     (is (= (assoc base-state
                   :state :flashing-for-merge
                   :flashing-before-merge 4
+                  :current-flashing-frame 0
                   :filled-blocks
                   (for [x (range 9)
                         y (range 20 22)]
@@ -175,6 +169,33 @@
              (assoc base-state
                     :state :flashing-for-merge
                     :flashing-before-merge 3
+                    :current-flashing-frame 3
+                    :filled-blocks
+                    (concat (for [x (range 9)
+                                  y (range 20 22)]
+                              {:x x :y y})
+                            (for [x (range 10)
+                                  y (range 22 24)]
+                              {:x x :y y}))
+                    :merging-lines [22 23]))))
+
+    (is (= (assoc base-state
+                  :state :flashing-for-merge
+                  :flashing-before-merge 3
+                  :current-flashing-frame 1
+                  :filled-blocks
+                  (concat (for [x (range 9)
+                                y (range 20 22)]
+                            {:x x :y y})
+                          (for [x (range 10)
+                                y (range 22 24)]
+                            {:x x :y y}))
+                  :merging-lines [22 23])
+           (tetris/tick
+             (assoc base-state
+                    :state :flashing-for-merge
+                    :flashing-before-merge 3
+                    :current-flashing-frame 0
                     :filled-blocks
                     (concat (for [x (range 9)
                                   y (range 20 22)]
@@ -193,6 +214,7 @@
            (assoc base-state
                   :state :flashing-for-merge
                   :flashing-before-merge 4
+                  :current-flashing-frame 3
                   :filled-blocks
                   (for [x (range 9)
                         y (range 20 22)]

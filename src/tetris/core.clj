@@ -188,7 +188,9 @@
                     current-frame
                     frame-rate
                     filled-blocks
-                    flashing-before-merge]
+                    flashing-before-merge
+                    frames-before-flashing
+                    current-flashing-frame]
              current-state :state
              :as state}]
   (let [next-frame (inc (mod current-frame
@@ -226,6 +228,12 @@
           (assoc :current-frame next-frame))
 
       (and flashing-before-merge
+           current-flashing-frame
+           (< current-flashing-frame
+              frames-before-flashing))
+      (update state :current-flashing-frame inc)
+
+      (and flashing-before-merge
            (odd? flashing-before-merge)
            (completed-lines filled-blocks-with-piece))
       (-> state
@@ -236,6 +244,7 @@
                     (comp
                       (set (completed-lines filled-blocks-with-piece))
                       :y)))
+          (assoc :current-flashing-frame 0)
           (update :flashing-before-merge inc))
 
       (and flashing-before-merge
@@ -249,10 +258,11 @@
                             y (:merging-lines state)]
                         {:x x :y y})
                       (concat filled-blocks)))
+          (assoc :current-flashing-frame 0)
           (update :flashing-before-merge inc))
 
       (and flashing-before-merge
-           (even? flashing-before-merge) )
+           (even? flashing-before-merge))
       (-> state
           (assoc :state :just-merged)
           (assoc :current-piece [])
@@ -270,6 +280,7 @@
                         (if others
                           (recur new-filled others)
                           new-filled)))))
+          (dissoc :current-flashing-frame)
           (dissoc :merging-lines)
           (dissoc :flashing-before-merge))
 
@@ -279,6 +290,7 @@
           (assoc :merging-lines (completed-lines filled-blocks-with-piece))
           (assoc :current-piece [])
           (assoc :filled-blocks filled-blocks-with-piece)
+          (assoc :current-flashing-frame 0)
           (assoc :flashing-before-merge 1))
 
       :else
@@ -295,11 +307,13 @@
    :board-width 10
    :board-x 5
    :board-y 5
+   :flashes-before-merging 2
+   :frames-before-flashing 3
    :current-piece []
    :next-pieces [[]]
    :piece-generator random-piece
    :ticks-per-second 1
-   :current-frame 0
+   :current-frame 1
    :frame-rate 60
    :size 15})
 
@@ -312,8 +326,9 @@
                    y (range 20 24)]
                {:x x :y y}))
       (assoc :current-piece (repeat-right 4 l-shape))
-      (assoc :next-pieces [t-shape
-                           block-shape
+      (assoc :frames-before-flashing 6)
+      (assoc :next-pieces [block-shape
+                           t-shape
                            z-shape
                            s-shape])))
 
@@ -359,24 +374,24 @@
 
   ;; draw current piece
 
-  (->> (:current-piece state)
-       (map (juxt (comp (partial +
-                                 (:board-x state))
-                        :x)
-                  (comp (partial +
-                                 (:board-y state))
-                        :y)))
-       (draw-rects! (:size state)))
+  (some->> (:current-piece state)
+           (map (juxt (comp (partial +
+                                     (:board-x state))
+                            :x)
+                      (comp (partial +
+                                     (:board-y state))
+                            :y)))
+           (draw-rects! (:size state)))
 
   ;; draw filled blocks
-  (->> (:filled-blocks state)
-       (map (juxt (comp (partial +
-                                 (:board-x state))
-                        :x)
-                  (comp (partial +
-                                 (:board-y state))
-                        :y)))
-       (draw-rects! (:size state))))
+  (some->> (:filled-blocks state)
+           (map (juxt (comp (partial +
+                                     (:board-x state))
+                            :x)
+                      (comp (partial +
+                                     (:board-y state))
+                            :y)))
+           (draw-rects! (:size state))))
 
 (defn main []
   (q/defsketch tetris
