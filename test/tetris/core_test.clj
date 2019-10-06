@@ -100,6 +100,21 @@
                                   {:x 0 :y 23}
                                   {:x 1 :y 23}]))))
 
+  (is (= (assoc base-state
+                :state :just-merged-piece
+                :current-frame 2
+                :filled-blocks (for [x (range 1 10)
+                                     y (range 22 24)]
+                                 {:x x :y y}) )
+         (tetris/tick
+           (assoc base-state
+                  :state :ticking-away
+                  :filled-blocks (for [x (range 1 9)
+                                       y (range 22 24)]
+                                   {:x x :y y})
+                  :current-piece [{:x 9 :y 22}
+                                  {:x 9 :y 23}]))))
+
   (testing "flashing when merging"
     (is (= (assoc base-state
                   :state :flashing-for-merge
@@ -209,7 +224,8 @@
                 :state :just-merged
                 :filled-blocks (for [x (range 9)
                                      y (range 22 24)]
-                                 {:x x :y y}))
+                                 {:x x :y y})
+                :ticks-per-second 2)
          (tetris/tick
            (assoc base-state
                   :state :flashing-for-merge

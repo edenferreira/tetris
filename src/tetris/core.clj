@@ -128,10 +128,12 @@
   (->> filled-blocks
        (group-by :y)
        (map (juxt key
-                  (comp (partial apply +)
-                        (partial map :x)
-                        val)))
-       (filter (comp (partial <= 45) second))
+                  (comp
+                    (partial apply +)
+                    (partial map inc)
+                    (partial map :x)
+                    val)))
+       (filter (comp (partial <= 55) second))
        (map first)
        not-empty))
 
@@ -268,6 +270,7 @@
                   :up rotate
                   :nothing)]
     (if (and (not= :nothing move-fn)
+             ;; test without current piece
              (inside? (move-fn current-piece)
                       (board-blocks state))
              (not (collision? (move-fn current-piece)
