@@ -35,11 +35,22 @@
 (def block-shape [(o 0 0) (o 1 0) (o 1 1) (o 0 1)])
 
 (defn is-block? [shape]
-  (let [{:keys [x y]} (first shape)]
-    (zero?
-      (- (apply + (map (comp #(- % x) :x) shape))
-         (apply + (map (comp #(- % y) :y) shape))))))
-
+  (let [min-x (->> shape
+                   (map :x)
+                   (apply min))
+        min-y (->> shape
+                   (map :y)
+                   (apply min))
+        normalized-shape
+        (->> shape
+             (map (fn [s]
+                    (update s :x
+                            #(- % min-x))))
+             (map (fn [s]
+                    (update s :y
+                            #(- % min-y)))))]
+    (= (set normalized-shape)
+       (set block-shape)) ))
 
 ;;y  a mais vira x a menos
 ;;x a mais vira y a msi
@@ -310,9 +321,9 @@
                   :right right
                   :left left
                   :down down
+                  :up rotate
                   :nothing)]
-    (if (and (not= :nothing
-                   move-fn)
+    (if (and (not= :nothing move-fn)
              (inside? (move-fn current-piece)
                       (board-blocks state))
              (not (collision? (move-fn current-piece)

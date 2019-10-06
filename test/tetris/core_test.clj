@@ -283,6 +283,17 @@
 
   (is (= (assoc base-state
                 :filled-blocks []
+                :current-piece [{:x 4 :y 0}
+                                {:x 3 :y 0} ])
+         (tetris/key-pressed
+           (assoc base-state
+                  :filled-blocks []
+                  :current-piece [{:x 4 :y 0}
+                                  {:x 4 :y 1}])
+           {:key :up})))
+
+  (is (= (assoc base-state
+                :filled-blocks []
                 :current-piece [{:x 9 :y 0}
                                 {:x 9 :y 1}])
          (tetris/key-pressed
