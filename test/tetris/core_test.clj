@@ -82,10 +82,10 @@
 
   (is (= (assoc base-state
                 :current-frame 60
-                :current-piece [{:x 0 :y 2}
-                                {:x 0 :y 1}
-                                {:x 0 :y 3}
-                                {:x 1 :y 3}])
+                :current-piece [{:x 0 :y 1}
+                                {:x 0 :y 0}
+                                {:x 0 :y 2}
+                                {:x 1 :y 2}])
          (tetris/tick
            (assoc base-state
                   :current-frame 59
@@ -100,7 +100,7 @@
                 :filled-blocks [{:x 0 :y 22}
                                 {:x 0 :y 21}
                                 {:x 0 :y 23}
-                                {:x 1 :y 23}] )
+                                {:x 1 :y 23}])
          (tetris/tick
            (assoc base-state
                   :state :ticking-away
@@ -108,7 +108,27 @@
                   :current-piece [{:x 0 :y 22}
                                   {:x 0 :y 21}
                                   {:x 0 :y 23}
-                                  {:x 1 :y 23}] ) )))
+                                  {:x 1 :y 23}]))))
+
+  (is (= (assoc base-state
+                :state :just-merged-piece
+                :current-frame 41
+                :filled-blocks [{:x 0 :y 22}
+                                {:x 0 :y 21}
+                                {:x 0 :y 23}
+                                {:x 1 :y 23}
+                                {:x 0 :y 20}
+                                {:x 1 :y 20}])
+         (tetris/tick
+           (assoc base-state
+                  :state :ticking-away
+                  :current-frame 40
+                  :filled-blocks [{:x 0 :y 22}
+                                  {:x 0 :y 21}
+                                  {:x 0 :y 23}
+                                  {:x 1 :y 23}]
+                  :current-piece [{:x 0 :y 20}
+                                  {:x 1 :y 20}]))))
 
   (let [piece-generator (constantly
                           [{:x 0 :y 1}
@@ -119,8 +139,8 @@
                                   {:x 0 :y 21}
                                   {:x 0 :y 23}
                                   {:x 1 :y 23}]
-                  :current-piece [{:x 0 :y 1}
-                                  {:x 0 :y 2}]
+                  :current-piece [{:x 4 :y 0}
+                                  {:x 4 :y 1}]
                   :next-pieces [[{:x 0 :y 1}
                                  {:x 0 :y 0}]]
                   :piece-generator piece-generator)

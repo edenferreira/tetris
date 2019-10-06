@@ -173,36 +173,47 @@
 
 (defn tick [{:keys [current-piece
                     next-pieces
-                    piece-generator]
+                    piece-generator
+                    current-frame
+                    frame-rate]
              current-state :state
              :as state}]
-  (cond
-    (= :just-merged-piece current-state)
-    (-> state
-        (assoc :current-piece (first next-pieces))
-        (update :next-pieces rest)
-        (update :next-pieces conj (piece-generator))
-        (assoc :state :ticking-away)
-        (assoc :current-frame 1))
+  (let [next-frame (inc (mod current-frame
+                             frame-rate))]
+    (cond
+      (= :just-merged-piece current-state)
+      (-> state
+          (assoc :current-piece (->> next-pieces
+                                     first
+                                     up
+                                     (repeat-right 4)))
+          (update :next-pieces rest)
+          (update :next-pieces conj (piece-generator))
+          (assoc :state :ticking-away)
+          (assoc :current-frame 1))
 
-    (inside? (down current-piece)
-             (board-blocks state))
-    (-> state
-        (update :current-piece down)
-        (update :current-frame
-                (comp inc
-                      #(mod %
-                            (:frame-rate state)))))
+      (and (inside? (down current-piece)
+                   (board-blocks state))
+           (not (collision? (down current-piece)
+                            (:filled-blocks state)))
+           (= next-frame 1))
+      (-> state
+          (update :current-piece down)
+          (assoc :current-frame next-frame))
 
-    :else
-    (-> state
-        (assoc :current-piece [])
-        (update :filled-blocks concat current-piece)
-        (assoc :state :just-merged-piece)
-        (update :current-frame
-                (comp inc
-                      #(mod %
-                            (:frame-rate state)))))))
+      (and (inside? (down current-piece)
+                    (board-blocks state))
+           (not (collision? (down current-piece)
+                            (:filled-blocks state))))
+      (-> state
+          (assoc :current-frame next-frame))
+
+      :else
+      (-> state
+          (assoc :current-piece [])
+          (update :filled-blocks concat current-piece)
+          (assoc :state :just-merged-piece)
+          (assoc :current-frame next-frame)))))
 
 (def base-state
   {:state :ticking-away
@@ -224,7 +235,7 @@
   (q/color-mode :hsb)
   (-> base-state
       (assoc :filled-blocks
-             (for [x (range 8)
+             (for [x [0 1 2 3 6 7 8 9]
                    y (range 20 24)]
                {:x x :y y}))
       (assoc :current-piece (repeat-right 4 l-shape))
@@ -301,7 +312,7 @@
     ; setup function called only once, during sketch initialization.
     :setup setup
     ; update-state is called on each iteration before draw-state.
-    :update identity
+    :update tick #_identity
     :draw draw-state
     :features [:keep-on-top]
     #_#_
@@ -324,3 +335,4 @@
     ; Check quil wiki for more info about middlewares and particularly
     ; fun-mode.
     :middleware [m/fun-mode]))
+(main)
