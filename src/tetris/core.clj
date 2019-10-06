@@ -95,46 +95,6 @@
         x (range board-width)]
     {:x x :y y}))
 
-(defn add-piece [board piece]
-  (let [piece (loop [target-piece piece]
-                (if (< 0 (->> target-piece
-                              (map :y)
-                              (apply max)))
-                  (recur (up target-piece))
-                  target-piece))]
-    (assoc board
-           :piece (-> piece
-                      right right
-                      right right))))
-
-(defn update-board [{:keys [next-piece]
-                     :as board}
-                    move]
-  (let [move-fn (case move
-                  :down down
-                  :right right
-                  :left left
-                  :up rotate)]
-    (cond
-      (and (= :down move)
-           (or (collision? (move-fn (:piece board))
-                           (:filled-blocks board))
-               (not (inside? (move-fn (:piece board))
-                             (board-blocks board)))))
-      (-> board
-          (update :filled-blocks concat (:piece board))
-          (add-piece next-piece)
-          (dissoc :next-piece))
-
-      (or (collision? (move-fn (:piece board))
-                      (:filled-blocks board))
-          (not (inside? (move-fn (:piece board))
-                        (board-blocks board))))
-      board
-
-      :else
-      (update board :piece move-fn))))
-
 (defn draw-rects! [size positions]
   (doseq [[x y] positions]
     (q/rect (* x size)
@@ -142,34 +102,10 @@
             size
             size)))
 
-(defn target-frame [speed-x]
-  (-> 60 (/ speed-x) Math/abs))
-
-(defn non-frame [{:keys [speed-x] :as state}]
-  (update state :frame (comp (part-> mod
-                                     (target-frame speed-x))
-                             inc)))
-
 (defn can-move? [move-fn {:keys [piece] :as board}]
   (and (inside? board (move-fn piece))
        (not (collision? (move-fn piece)
                         (:filled-blocks board)))))
-
-(defn update-state [{:keys [frame
-                            speed-x]
-                     :as state}]
-  (let [new-state
-        (if (>= frame
-                (- (target-frame speed-x) 1))
-          (-> state
-              (update :board
-                      update-board :down)
-              non-frame)
-          (non-frame state))]
-    (if (not (get-in new-state [:board :next-piece]))
-      (assoc-in new-state [:board :next-piece]
-                (random-piece))
-      new-state)))
 
 (defn call-times [f]
   (fn [n x]
@@ -329,7 +265,7 @@
              (not (collision? (move-fn current-piece)
                               (:filled-blocks state))))
       (update state :current-piece move-fn)
-      state )))
+      state)))
 
 (def base-state
   {:state :ticking-away
@@ -435,13 +371,11 @@
   (q/defsketch tetris
     :title "You spin my circle right round"
     :size [500 800]
-    ; setup function called only once, during sketch initialization.
     :setup setup
-    ; update-state is called on each iteration before draw-state.
     :update (fn [state]
               (let [new-state (tick state)]
                 (swap! states conj new-state)
-                new-state)) #_identity
+                new-state))
     :draw draw-state
     :features [:keep-on-top]
     :key-pressed key-pressed
