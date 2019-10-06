@@ -3,6 +3,12 @@
             [quil.middleware :as m]
             [clojure.set :as set]))
 
+;; TODOs
+;; test the increase velocity and o better by it
+;; create points
+;; improve the game over
+;; better setup, and test the keys of configuration
+
 (def insert-first
   (comp
     (partial apply concat)
@@ -144,8 +150,9 @@
              current-state :state
              :as state}]
   (let [next-frame (inc (mod current-frame
-                             (/ frame-rate
-                                ticks-per-second)))
+                             (int
+                               (/ frame-rate
+                                  ticks-per-second))))
         filled-blocks-with-piece (concat filled-blocks
                                          current-piece) ]
     (cond
@@ -231,6 +238,7 @@
                         (if others
                           (recur new-filled others)
                           new-filled)))))
+          (update :ticks-per-second inc)
           (dissoc :current-flashing-frame)
           (dissoc :merging-lines)
           (dissoc :flashing-before-merge))
@@ -288,18 +296,15 @@
   (q/frame-rate 60)
   (q/color-mode :hsb)
   (let [state (-> base-state
-                  (assoc :filled-blocks
-                         (for [x [0 1 2 3 6 7 8 9]
-                               y (range 20 24)]
-                           {:x x :y y}))
-                  (assoc :current-piece (up (repeat-right 4 l-shape)))
+                  (assoc :current-piece (up (repeat-right 4
+                                                          (random-piece))))
                   (assoc :frames-before-flashing 6)
                   (assoc :ticks-per-second 2)
                   (assoc :size 20)
-                  (assoc :next-pieces [block-shape
-                                       t-shape
-                                       z-shape
-                                       s-shape]))]
+                  (assoc :next-pieces [(random-piece)
+                                       (random-piece)
+                                       (random-piece)
+                                       (random-piece)]))]
     (reset! states [state])
     state))
 
