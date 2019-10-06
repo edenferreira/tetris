@@ -171,15 +171,30 @@
 (def repeat-down (call-times down))
 (def repeat-right (call-times right))
 
+(defn completed-lines [filled-blocks]
+  (->> filled-blocks
+       (group-by :y)
+       (map (juxt key
+                  (comp (partial apply +)
+                        (partial map :x)
+                        val)))
+       (filter (comp (partial <= 45) second))
+       (map first)
+       not-empty))
+
 (defn tick [{:keys [current-piece
                     next-pieces
                     piece-generator
                     current-frame
-                    frame-rate]
+                    frame-rate
+                    filled-blocks
+                    flashing-before-merge]
              current-state :state
              :as state}]
   (let [next-frame (inc (mod current-frame
-                             frame-rate))]
+                             frame-rate))
+        filled-blocks-with-piece (concat filled-blocks
+                                         current-piece) ]
     (cond
       (= :just-merged-piece current-state)
       (-> state
@@ -192,26 +207,84 @@
           (assoc :state :ticking-away)
           (assoc :current-frame 1))
 
-      (and (inside? (down current-piece)
+      (and (= current-state :ticking-away)
+           (inside? (down current-piece)
                    (board-blocks state))
            (not (collision? (down current-piece)
-                            (:filled-blocks state)))
+                            filled-blocks))
            (= next-frame 1))
       (-> state
           (update :current-piece down)
           (assoc :current-frame next-frame))
 
-      (and (inside? (down current-piece)
+      (and (= current-state :ticking-away)
+           (inside? (down current-piece)
                     (board-blocks state))
            (not (collision? (down current-piece)
-                            (:filled-blocks state))))
+                            filled-blocks)))
       (-> state
           (assoc :current-frame next-frame))
+
+      (and flashing-before-merge
+           (odd? flashing-before-merge)
+           (completed-lines filled-blocks-with-piece))
+      (-> state
+          (assoc :current-piece [])
+          (update :filled-blocks
+                  (partial
+                    remove
+                    (comp
+                      (set (completed-lines filled-blocks-with-piece))
+                      :y)))
+          (update :flashing-before-merge inc))
+
+      (and flashing-before-merge
+           (even? flashing-before-merge)
+           (< flashing-before-merge
+              (* 2 (:flashes-before-merging state))))
+      (-> state
+          (assoc :current-piece [])
+          (assoc :filled-blocks
+                 (->> (for [x (range (:board-width state))
+                            y (:merging-lines state)]
+                        {:x x :y y})
+                      (concat filled-blocks)))
+          (update :flashing-before-merge inc))
+
+      (and flashing-before-merge
+           (even? flashing-before-merge) )
+      (-> state
+          (assoc :state :just-merged)
+          (assoc :current-piece [])
+          (update :filled-blocks
+                  (fn [filled-blocks]
+                    (loop [filled-blocks filled-blocks
+                           [merging & others]
+                           (sort (:merging-lines state))]
+                      (let [new-filled
+                            (->> filled-blocks
+                                 (map #(if (< (:y %)
+                                              merging)
+                                         (update % :y inc)
+                                         %)))]
+                        (if others
+                          (recur new-filled others)
+                          new-filled)))))
+          (dissoc :merging-lines)
+          (dissoc :flashing-before-merge))
+
+      (completed-lines filled-blocks-with-piece)
+      (-> state
+          (assoc :state :flashing-for-merge)
+          (assoc :merging-lines (completed-lines filled-blocks-with-piece))
+          (assoc :current-piece [])
+          (assoc :filled-blocks filled-blocks-with-piece)
+          (assoc :flashing-before-merge 1))
 
       :else
       (-> state
           (assoc :current-piece [])
-          (update :filled-blocks concat current-piece)
+          (assoc :filled-blocks filled-blocks-with-piece)
           (assoc :state :just-merged-piece)
           (assoc :current-frame next-frame)))))
 
@@ -335,4 +408,3 @@
     ; Check quil wiki for more info about middlewares and particularly
     ; fun-mode.
     :middleware [m/fun-mode]))
-(main)
