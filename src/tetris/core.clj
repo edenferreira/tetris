@@ -91,7 +91,7 @@
 
 (defn board-blocks [{:keys [board-height
                             board-width]}]
-  (for [y (range board-height)
+  (for [y (range -2 board-height)
         x (range board-width)]
     {:x x :y y}))
 
@@ -358,7 +358,7 @@
                            {:x x :y y}))
                   (assoc :current-piece (up (repeat-right 4 l-shape)))
                   (assoc :frames-before-flashing 6)
-                  (assoc :ticks-per-second 10)
+                  (assoc :ticks-per-second 2)
                   (assoc :size 20)
                   (assoc :next-pieces [block-shape
                                        t-shape
