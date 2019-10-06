@@ -182,6 +182,8 @@
        (map first)
        not-empty))
 
+(def states (atom {}))
+
 (defn tick [{:keys [current-piece
                     next-pieces
                     piece-generator
@@ -190,11 +192,13 @@
                     filled-blocks
                     flashing-before-merge
                     frames-before-flashing
-                    current-flashing-frame]
+                    current-flashing-frame
+                    ticks-per-second]
              current-state :state
              :as state}]
   (let [next-frame (inc (mod current-frame
-                             frame-rate))
+                             (/ frame-rate
+                                ticks-per-second)))
         filled-blocks-with-piece (concat filled-blocks
                                          current-piece) ]
     (cond
@@ -204,7 +208,7 @@
                                      first
                                      up
                                      (repeat-right 4)))
-          (update :next-pieces rest)
+          (update :next-pieces (comp vec rest))
           (update :next-pieces conj (piece-generator))
           (assoc :state :ticking-away)
           (assoc :current-frame 1))
@@ -300,6 +304,22 @@
           (assoc :state :just-merged-piece)
           (assoc :current-frame next-frame)))))
 
+(defn key-pressed [{:keys [current-piece] :as state}
+                  {:keys [key]}]
+  (let [move-fn (case key
+                  :right right
+                  :left left
+                  :down down
+                  :nothing)]
+    (if (and (not= :nothing
+                   move-fn)
+             (inside? (move-fn current-piece)
+                      (board-blocks state))
+             (not (collision? (move-fn current-piece)
+                              (:filled-blocks state))))
+      (update state :current-piece move-fn)
+      state )))
+
 (def base-state
   {:state :ticking-away
    :filled-blocks []
@@ -310,7 +330,7 @@
    :flashes-before-merging 2
    :frames-before-flashing 3
    :current-piece []
-   :next-pieces [[]]
+   :next-pieces []
    :piece-generator random-piece
    :ticks-per-second 1
    :current-frame 1
@@ -320,17 +340,21 @@
 (defn setup []
   (q/frame-rate 60)
   (q/color-mode :hsb)
-  (-> base-state
-      (assoc :filled-blocks
-             (for [x [0 1 2 3 6 7 8 9]
-                   y (range 20 24)]
-               {:x x :y y}))
-      (assoc :current-piece (repeat-right 4 l-shape))
-      (assoc :frames-before-flashing 6)
-      (assoc :next-pieces [block-shape
-                           t-shape
-                           z-shape
-                           s-shape])))
+  (let [state (-> base-state
+                  (assoc :filled-blocks
+                         (for [x [0 1 2 3 6 7 8 9]
+                               y (range 20 24)]
+                           {:x x :y y}))
+                  (assoc :current-piece (up (repeat-right 4 l-shape)))
+                  (assoc :frames-before-flashing 6)
+                  (assoc :ticks-per-second 10)
+                  (assoc :size 20)
+                  (assoc :next-pieces [block-shape
+                                       t-shape
+                                       z-shape
+                                       s-shape]))]
+    (reset! states [state])
+    state))
 
 ;; shapes should be a calculation, and not defined
 (defn draw-state [state]
@@ -375,12 +399,15 @@
   ;; draw current piece
 
   (some->> (:current-piece state)
+           (map (juxt :x
+                      :y))
+           (remove (comp neg? second))
            (map (juxt (comp (partial +
                                      (:board-x state))
-                            :x)
+                            first)
                       (comp (partial +
                                      (:board-y state))
-                            :y)))
+                            second)))
            (draw-rects! (:size state)))
 
   ;; draw filled blocks
@@ -396,29 +423,17 @@
 (defn main []
   (q/defsketch tetris
     :title "You spin my circle right round"
-    :size [500 500]
+    :size [500 800]
     ; setup function called only once, during sketch initialization.
     :setup setup
     ; update-state is called on each iteration before draw-state.
-    :update tick #_identity
+    :update (fn [state]
+              (let [new-state (tick state)]
+                (swap! states conj new-state)
+                new-state)) #_identity
     :draw draw-state
     :features [:keep-on-top]
-    #_#_
-        :key-pressed
-        (fn [{:keys [next-piece]
-              :as state}
-             {:keys [key]}]
-          (if (#{:right :left :up :down} key)
-            (let [new-state
-                  (update state
-                          :board update-board key)]
-              (doto
-                (get new-state :board))
-              (if (not (get-in new-state [:board :next-piece]))
-                (assoc-in new-state [:board :next-piece]
-                          (random-piece))
-                new-state))
-            state))
+    :key-pressed key-pressed
     ; This sketch uses functional-mode middleware.
     ; Check quil wiki for more info about middlewares and particularly
     ; fun-mode.

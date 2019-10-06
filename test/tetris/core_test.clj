@@ -246,6 +246,64 @@
                     :next-pieces [[{:x 0 :y 1}
                                    {:x 0 :y 2}]]
                     :piece-generator piece-generator))))))
+
+(deftest keypressed
+  (is (= (assoc base-state
+                :filled-blocks []
+                :current-piece [{:x 4 :y 1}
+                                {:x 4 :y 2}])
+         (tetris/key-pressed
+           (assoc base-state
+                  :filled-blocks []
+                  :current-piece [{:x 4 :y 0}
+                                  {:x 4 :y 1}])
+           {:key :down})))
+
+  (is (= (assoc base-state
+                :filled-blocks []
+                :current-piece [{:x 3 :y 0}
+                                {:x 3 :y 1}])
+         (tetris/key-pressed
+           (assoc base-state
+                  :filled-blocks []
+                  :current-piece [{:x 4 :y 0}
+                                  {:x 4 :y 1}])
+           {:key :left})))
+
+  (is (= (assoc base-state
+                :filled-blocks []
+                :current-piece [{:x 5 :y 0}
+                                {:x 5 :y 1}])
+         (tetris/key-pressed
+           (assoc base-state
+                  :filled-blocks []
+                  :current-piece [{:x 4 :y 0}
+                                  {:x 4 :y 1}])
+           {:key :right})))
+
+  (is (= (assoc base-state
+                :filled-blocks []
+                :current-piece [{:x 9 :y 0}
+                                {:x 9 :y 1}])
+         (tetris/key-pressed
+           (assoc base-state
+                  :filled-blocks []
+                  :current-piece [{:x 9 :y 0}
+                                  {:x 9 :y 1}])
+           {:key :right})))
+
+  (is (= (assoc base-state
+                :filled-blocks [{:x 8 :y 0}
+                                {:x 8 :y 1}]
+                :current-piece [{:x 7 :y 0}
+                                {:x 7 :y 1}])
+         (tetris/key-pressed
+           (assoc base-state
+                  :filled-blocks [{:x 8 :y 0}
+                                  {:x 8 :y 1}]
+                  :current-piece [{:x 7 :y 0}
+                                  {:x 7 :y 1}])
+           {:key :right}))))
 #_
 (deftest update-board
   (is (= {:height 24
