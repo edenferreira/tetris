@@ -50,7 +50,92 @@
         (tetris/inside?
           [{:x 2 :y 1} {:x 2 :y 3}]
           [{:x 2 :y 2} {:x 2 :y 4} {:x 2 :y 1} {:x 2 :y 1}]))))
+(def base-state
+  {:state :ticking-away
+   :filled-blocks []
+   :board-height 24
+   :board-width 10
+   :board-x 5
+   :board-y 5
+   :current-piece []
+   :next-pieces [[]]
+   :piece-generator identity
+   :ticks-per-second 1
+   :current-frame 1
+   :frame-rate 60
+   :size 15})
+(inc (mod 59 60))
+(deftest tick
+  (is (= (assoc base-state
+                :current-frame 1
+                :current-piece [{:x 0 :y 2}
+                                {:x 0 :y 1}
+                                {:x 0 :y 3}
+                                {:x 1 :y 3}])
+         (tetris/tick
+           (assoc base-state
+                  :current-frame 60
+                  :current-piece [{:x 0 :y 1}
+                                  {:x 0 :y 0}
+                                  {:x 0 :y 2}
+                                  {:x 1 :y 2}]))))
 
+  (is (= (assoc base-state
+                :current-frame 60
+                :current-piece [{:x 0 :y 2}
+                                {:x 0 :y 1}
+                                {:x 0 :y 3}
+                                {:x 1 :y 3}])
+         (tetris/tick
+           (assoc base-state
+                  :current-frame 59
+                  :current-piece [{:x 0 :y 1}
+                                  {:x 0 :y 0}
+                                  {:x 0 :y 2}
+                                  {:x 1 :y 2}]))))
+
+  (is (= (assoc base-state
+                :state :just-merged-piece
+                :current-frame 41
+                :filled-blocks [{:x 0 :y 22}
+                                {:x 0 :y 21}
+                                {:x 0 :y 23}
+                                {:x 1 :y 23}] )
+         (tetris/tick
+           (assoc base-state
+                  :state :ticking-away
+                  :current-frame 40
+                  :current-piece [{:x 0 :y 22}
+                                  {:x 0 :y 21}
+                                  {:x 0 :y 23}
+                                  {:x 1 :y 23}] ) )))
+
+  (let [piece-generator (constantly
+                          [{:x 0 :y 1}
+                           {:x 0 :y 0}])]
+    (is (= (assoc base-state
+                  :current-frame 1
+                  :filled-blocks [{:x 0 :y 22}
+                                  {:x 0 :y 21}
+                                  {:x 0 :y 23}
+                                  {:x 1 :y 23}]
+                  :current-piece [{:x 0 :y 1}
+                                  {:x 0 :y 2}]
+                  :next-pieces [[{:x 0 :y 1}
+                                 {:x 0 :y 0}]]
+                  :piece-generator piece-generator)
+           (tetris/tick
+             (assoc base-state
+                    :state :just-merged-piece
+                    :current-frame 50
+                    :filled-blocks [{:x 0 :y 22}
+                                    {:x 0 :y 21}
+                                    {:x 0 :y 23}
+                                    {:x 1 :y 23}]
+                    :next-pieces [[{:x 0 :y 1}
+                                   {:x 0 :y 2}]]
+                    :piece-generator piece-generator))))))
+#_
 (deftest update-board
   (is (= {:height 24
           :width 10

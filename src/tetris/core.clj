@@ -59,15 +59,6 @@
                 ))
            shape))))
 
-(def turn
-  (partial map (fn [{:keys [x y]}]
-                 (if (= x
-                        (:x (nth l-shape 2)))
-                   (o (:x (nth l-shape 2))
-                      x)
-                   (o y
-                      (:y (nth l-shape 2)))))))
-
 (defn random-piece []
   (rand-nth [l-shape
              mirror-l-shape
@@ -87,23 +78,10 @@
                        (set positions2))
      (set positions1)))
 
-(def board
-  {:height 24
-   :width 10
-   :x 5
-   :y 5
-   :piece []
-   :next-piece []
-   :filled-blocks []})
-
-(defn board-blocks [{:keys [height width]}]
-  (for [y (range height)
-        x (range width)]
-    {:x x :y y}))
-
-(defn virtual-board-blocks [{:keys [height width]}]
-  (for [y (range -5 height)
-        x (range width)]
+(defn board-blocks [{:keys [board-height
+                            board-width]}]
+  (for [y (range board-height)
+        x (range board-width)]
     {:x x :y y}))
 
 (defn add-piece [board piece]
@@ -131,7 +109,7 @@
            (or (collision? (move-fn (:piece board))
                            (:filled-blocks board))
                (not (inside? (move-fn (:piece board))
-                             (virtual-board-blocks board)))))
+                             (board-blocks board)))))
       (-> board
           (update :filled-blocks concat (:piece board))
           (add-piece next-piece)
@@ -140,19 +118,11 @@
       (or (collision? (move-fn (:piece board))
                       (:filled-blocks board))
           (not (inside? (move-fn (:piece board))
-                        (virtual-board-blocks board))))
+                        (board-blocks board))))
       board
 
       :else
       (update board :piece move-fn))))
-
-(defn draw-one! [{:keys [x y]}
-                 {board-x :x board-y :y}
-                 size]
-  (q/rect (* (+ board-x x) size)
-          (* (+ board-y y) size)
-          size
-          size))
 
 (defn draw-rects! [size positions]
   (doseq [[x y] positions]
@@ -160,24 +130,6 @@
             (* y size)
             size
             size)))
-
-(defn draw-board! [board size]
-  (run! (part-> draw-one!
-                board
-                size)
-        (:piece board))
-  (run! (part-> draw-one!
-                board
-                size)
-        (:filled-blocks board))
-  (run! (part-> draw-one!
-                board
-                size)
-        (-> (:next-piece board)
-            down
-            right right right right right
-            right right right right right
-            right right right)))
 
 (defn target-frame [speed-x]
   (-> 60 (/ speed-x) Math/abs))
@@ -219,6 +171,39 @@
 (def repeat-down (call-times down))
 (def repeat-right (call-times right))
 
+(defn tick [{:keys [current-piece
+                    next-pieces
+                    piece-generator]
+             current-state :state
+             :as state}]
+  (cond
+    (= :just-merged-piece current-state)
+    (-> state
+        (assoc :current-piece (first next-pieces))
+        (update :next-pieces rest)
+        (update :next-pieces conj (piece-generator))
+        (assoc :state :ticking-away)
+        (assoc :current-frame 1))
+
+    (inside? (down current-piece)
+             (board-blocks state))
+    (-> state
+        (update :current-piece down)
+        (update :current-frame
+                (comp inc
+                      #(mod %
+                            (:frame-rate state)))))
+
+    :else
+    (-> state
+        (assoc :current-piece [])
+        (update :filled-blocks concat current-piece)
+        (assoc :state :just-merged-piece)
+        (update :current-frame
+                (comp inc
+                      #(mod %
+                            (:frame-rate state)))))))
+
 (def base-state
   {:state :ticking-away
    :filled-blocks []
@@ -230,6 +215,8 @@
    :next-pieces [[]]
    :piece-generator random-piece
    :ticks-per-second 1
+   :current-frame 0
+   :frame-rate 60
    :size 15})
 
 (defn setup []
@@ -318,24 +305,22 @@
     :draw draw-state
     :features [:keep-on-top]
     #_#_
-    :key-pressed
-    (fn [{:keys [next-piece]
-          :as state}
-         {:keys [key]}]
-      (if (#{:right :left :up :down} key)
-        (let [new-state
-              (update state
-                      :board update-board key)]
-          (doto
-            (get new-state :board))
-          (if (not (get-in new-state [:board :next-piece]))
-            (assoc-in new-state [:board :next-piece]
-                      (random-piece))
-            new-state))
-        state))
+        :key-pressed
+        (fn [{:keys [next-piece]
+              :as state}
+             {:keys [key]}]
+          (if (#{:right :left :up :down} key)
+            (let [new-state
+                  (update state
+                          :board update-board key)]
+              (doto
+                (get new-state :board))
+              (if (not (get-in new-state [:board :next-piece]))
+                (assoc-in new-state [:board :next-piece]
+                          (random-piece))
+                new-state))
+            state))
     ; This sketch uses functional-mode middleware.
     ; Check quil wiki for more info about middlewares and particularly
     ; fun-mode.
     :middleware [m/fun-mode]))
-
-(main)
