@@ -85,7 +85,7 @@
                                   {:x 1 :y 2}]))))
 
   (is (= (assoc base-state
-                :state :just-merged-piece
+                :tetris.execution/stage :just-merged-piece
                 :current-frame 41
                 :filled-blocks [{:x 0 :y 22}
                                 {:x 0 :y 21}
@@ -93,7 +93,7 @@
                                 {:x 1 :y 23}])
          (tetris/tick
            (assoc base-state
-                  :state :ticking-away
+                  :tetris.execution/stage :ticking-away
                   :current-frame 40
                   :current-piece [{:x 0 :y 22}
                                   {:x 0 :y 21}
@@ -101,14 +101,14 @@
                                   {:x 1 :y 23}]))))
 
   (is (= (assoc base-state
-                :state :just-merged-piece
+                :tetris.execution/stage :just-merged-piece
                 :current-frame 2
                 :filled-blocks (for [x (range 1 10)
                                      y (range 22 24)]
-                                 {:x x :y y}) )
+                                 {:x x :y y}))
          (tetris/tick
            (assoc base-state
-                  :state :ticking-away
+                  :tetris.execution/stage :ticking-away
                   :filled-blocks (for [x (range 1 9)
                                        y (range 22 24)]
                                    {:x x :y y})
@@ -117,7 +117,7 @@
 
   (testing "flashing when merging"
     (is (= (assoc base-state
-                  :state :flashing-for-merge
+                  :tetris.execution/stage :flashing-for-merge
                   :flashing-before-merge 1
                   :current-flashing-frame 0
                   :filled-blocks (for [x (range 10)
@@ -126,7 +126,7 @@
                   :merging-lines [22 23])
            (tetris/tick
              (assoc base-state
-                    :state :ticking-away
+                    :tetris.execution/stage :ticking-away
                     :filled-blocks (for [x (range 9)
                                          y (range 22 24)]
                                      {:x x :y y})
@@ -134,14 +134,14 @@
                                     {:x 9 :y 23}]))))
 
     (is (= (assoc base-state
-                  :state :flashing-for-merge
+                  :tetris.execution/stage :flashing-for-merge
                   :flashing-before-merge 2
                   :current-flashing-frame 0
                   :filled-blocks []
                   :merging-lines [22 23])
            (tetris/tick
              (assoc base-state
-                    :state :flashing-for-merge
+                    :tetris.execution/stage :flashing-for-merge
                     :flashing-before-merge 1
                     :current-flashing-frame 3
                     :filled-blocks (for [x (range 10)
@@ -150,7 +150,7 @@
                     :merging-lines [22 23]))))
 
     (is (= (assoc base-state
-                  :state :flashing-for-merge
+                  :tetris.execution/stage :flashing-for-merge
                   :flashing-before-merge 3
                   :current-flashing-frame 0
                   :filled-blocks
@@ -163,7 +163,7 @@
                   :merging-lines [22 23])
            (tetris/tick
              (assoc base-state
-                    :state :flashing-for-merge
+                    :tetris.execution/stage :flashing-for-merge
                     :flashing-before-merge 2
                     :current-flashing-frame 3
                     :filled-blocks (for [x (range 9)
@@ -172,7 +172,7 @@
                     :merging-lines [22 23]))))
 
     (is (= (assoc base-state
-                  :state :flashing-for-merge
+                  :tetris.execution/stage :flashing-for-merge
                   :flashing-before-merge 4
                   :current-flashing-frame 0
                   :filled-blocks
@@ -182,7 +182,7 @@
                   :merging-lines [22 23])
            (tetris/tick
              (assoc base-state
-                    :state :flashing-for-merge
+                    :tetris.execution/stage :flashing-for-merge
                     :flashing-before-merge 3
                     :current-flashing-frame 3
                     :filled-blocks
@@ -195,7 +195,7 @@
                     :merging-lines [22 23]))))
 
     (is (= (assoc base-state
-                  :state :flashing-for-merge
+                  :tetris.execution/stage :flashing-for-merge
                   :flashing-before-merge 3
                   :current-flashing-frame 1
                   :filled-blocks
@@ -208,7 +208,7 @@
                   :merging-lines [22 23])
            (tetris/tick
              (assoc base-state
-                    :state :flashing-for-merge
+                    :tetris.execution/stage :flashing-for-merge
                     :flashing-before-merge 3
                     :current-flashing-frame 0
                     :filled-blocks
@@ -221,14 +221,14 @@
                     :merging-lines [22 23])))))
 
   (is (= (assoc base-state
-                :state :just-merged
+                :tetris.execution/stage :just-merged
                 :filled-blocks (for [x (range 9)
                                      y (range 22 24)]
                                  {:x x :y y})
                 :ticks-per-second 2)
          (tetris/tick
            (assoc base-state
-                  :state :flashing-for-merge
+                  :tetris.execution/stage :flashing-for-merge
                   :flashing-before-merge 4
                   :current-flashing-frame 3
                   :filled-blocks
@@ -253,7 +253,7 @@
                   :piece-generator piece-generator)
            (tetris/tick
              (assoc base-state
-                    :state :just-merged-piece
+                    :tetris.execution/stage :just-merged-piece
                     :current-frame 50
                     :filled-blocks [{:x 0 :y 22}
                                     {:x 0 :y 21}

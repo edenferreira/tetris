@@ -149,7 +149,7 @@
                     frames-before-flashing
                     current-flashing-frame
                     ticks-per-second]
-             current-state :state
+             current-state :tetris.execution/stage
              :as state}]
   (let [next-frame (inc (mod current-frame
                              (int
@@ -166,7 +166,7 @@
                                      (repeat-right 4)))
           (update :next-pieces (comp vec rest))
           (update :next-pieces conj (piece-generator))
-          (assoc :state :ticking-away)
+          (assoc :tetris.execution/stage :ticking-away)
           (assoc :current-frame 1))
 
       (and (= current-state :ticking-away)
@@ -224,7 +224,7 @@
       (and flashing-before-merge
            (even? flashing-before-merge))
       (-> state
-          (assoc :state :just-merged)
+          (assoc :tetris.execution/stage :just-merged)
           (assoc :current-piece [])
           (update :filled-blocks
                   (fn [filled-blocks]
@@ -247,7 +247,7 @@
 
       (completed-lines filled-blocks-with-piece)
       (-> state
-          (assoc :state :flashing-for-merge)
+          (assoc :tetris.execution/stage :flashing-for-merge)
           (assoc :merging-lines (completed-lines filled-blocks-with-piece))
           (assoc :current-piece [])
           (assoc :filled-blocks filled-blocks-with-piece)
@@ -258,7 +258,7 @@
       (-> state
           (assoc :current-piece [])
           (assoc :filled-blocks filled-blocks-with-piece)
-          (assoc :state :just-merged-piece)
+          (assoc :tetris.execution/stage :just-merged-piece)
           (assoc :current-frame next-frame)))))
 
 (defn key-pressed [{:keys [current-piece] :as state}
@@ -279,7 +279,7 @@
       state)))
 
 (def base-state
-  {:state :ticking-away
+  {:tetris.execution/stage :ticking-away
    :filled-blocks []
    :board-height 24
    :board-width 10
