@@ -294,7 +294,7 @@
    :tetris.definition/ticks-per-second 1
    :tetris.execution.frames/tick 1
    :tetris.definition/frame-rate 60
-   :size 15})
+   :tetris.definition/size 15})
 
 (defn setup []
   (q/frame-rate 60)
@@ -304,7 +304,7 @@
                                                                        (random-piece))))
                   (assoc :tetris.definition/blinking-frames 6)
                   (assoc :tetris.definition/ticks-per-second 2)
-                  (assoc :size 20)
+                  (assoc :tetris.definition/size 20)
                   (assoc :tetris.board/next-pieces [(random-piece)
                                        (random-piece)
                                        (random-piece)
@@ -324,7 +324,7 @@
              :let [x (+ x (:board-x state))
                    y (+ y (:board-y state))]]
          [x y])
-       (draw-rects! (:size state)))
+       (draw-rects! (:tetris.definition/size state)))
 
   (q/fill 220 200 240)
 
@@ -350,7 +350,7 @@
                       (comp (partial +
                                      (:board-y state))
                             :y)))
-           (draw-rects! (:size state))))
+           (draw-rects! (:tetris.definition/size state))))
 
   ;; draw current piece
 
@@ -364,7 +364,7 @@
                       (comp (partial +
                                      (:board-y state))
                             second)))
-           (draw-rects! (:size state)))
+           (draw-rects! (:tetris.definition/size state)))
 
   ;; draw filled blocks
   (some->> (:tetris.board/filled-blocks state)
@@ -374,7 +374,7 @@
                       (comp (partial +
                                      (:board-y state))
                             :y)))
-           (draw-rects! (:size state))))
+           (draw-rects! (:tetris.definition/size state))))
 
 (defn main []
   (q/defsketch tetris
