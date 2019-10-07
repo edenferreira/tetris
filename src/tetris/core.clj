@@ -139,16 +139,16 @@
 
 (def states (atom {}))
 
-(defn tick [{:keys [current-piece
-                    next-pieces
-                    piece-generator
-                    current-frame
-                    frame-rate
-                    filled-blocks
-                    flashing-before-merge
-                    frames-before-flashing
-                    current-flashing-frame
-                    ticks-per-second]
+(defn tick [{current-piece :current-piece
+             next-pieces :next-pieces
+             piece-generator :piece-generator
+             current-frame :current-frame
+             frame-rate :frame-rate
+             filled-blocks :filled-blocks
+             flashing-before-merge :flashing-before-merge
+             frames-before-flashing :frames-before-flashing
+             current-flashing-frame :current-flashing-frame
+             ticks-per-second :ticks-per-second
              current-state :tetris.execution/stage
              :as state}]
   (let [next-frame (inc (mod current-frame
@@ -261,7 +261,8 @@
           (assoc :tetris.execution/stage :just-merged-piece)
           (assoc :current-frame next-frame)))))
 
-(defn key-pressed [{:keys [current-piece] :as state}
+(defn key-pressed [{current-piece :current-piece
+                    :as state}
                   {:keys [key]}]
   (let [move-fn (case key
                   :right right
