@@ -1,6 +1,7 @@
 (ns tetris.core
   (:require [quil.core :as q]
             [quil.middleware :as m]
+            [tetris.state]
             [clojure.set :as set]))
 
 ;; TODOs
@@ -170,8 +171,7 @@
           (assoc :tetris.execution.frames/tick 1))
 
       (and (= current-state :ticking-away)
-           (inside? (down current-piece)
-                   (board-blocks state))
+           (tetris.state/piece-inside-board-after-move? down state)
            (not (collision? (down current-piece)
                             filled-blocks))
            (= next-frame 1))
@@ -180,8 +180,7 @@
           (assoc :tetris.execution.frames/tick next-frame))
 
       (and (= current-state :ticking-away)
-           (inside? (down current-piece)
-                    (board-blocks state))
+           (tetris.state/piece-inside-board-after-move? down state)
            (not (collision? (down current-piece)
                             filled-blocks)))
       (-> state
@@ -272,8 +271,7 @@
                   :nothing)]
     (if (and (not= :nothing move-fn)
              ;; test without current piece
-             (inside? (move-fn current-piece)
-                      (board-blocks state))
+             (tetris.state/piece-inside-board-after-move? move-fn state)
              (not (collision? (move-fn current-piece)
                               (:tetris.board/filled-blocks state))))
       (update state :tetris.board/current-piece move-fn)
