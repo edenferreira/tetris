@@ -145,9 +145,9 @@
              current-frame :current-frame
              frame-rate :frame-rate
              filled-blocks :filled-blocks
-             flashing-before-merge :flashing-before-merge
-             frames-before-flashing :frames-before-flashing
-             current-flashing-frame :current-flashing-frame
+             current-flashing-for-merge-frame :current-flashing-for-merge-frame
+             blinking-frames :blinking-frames
+             current-blinking-frame :current-blinking-frame
              ticks-per-second :ticks-per-second
              current-state :tetris.execution/stage
              :as state}]
@@ -187,14 +187,14 @@
       (-> state
           (assoc :current-frame next-frame))
 
-      (and flashing-before-merge
-           current-flashing-frame
-           (< current-flashing-frame
-              frames-before-flashing))
-      (update state :current-flashing-frame inc)
+      (and current-flashing-for-merge-frame
+           current-blinking-frame
+           (< current-blinking-frame
+              blinking-frames))
+      (update state :current-blinking-frame inc)
 
-      (and flashing-before-merge
-           (odd? flashing-before-merge)
+      (and current-flashing-for-merge-frame
+           (odd? current-flashing-for-merge-frame)
            (completed-lines filled-blocks-with-piece))
       (-> state
           (assoc :current-piece [])
@@ -204,12 +204,12 @@
                     (comp
                       (set (completed-lines filled-blocks-with-piece))
                       :y)))
-          (assoc :current-flashing-frame 0)
-          (update :flashing-before-merge inc))
+          (assoc :current-blinking-frame 0)
+          (update :current-flashing-for-merge-frame inc))
 
-      (and flashing-before-merge
-           (even? flashing-before-merge)
-           (< flashing-before-merge
+      (and current-flashing-for-merge-frame
+           (even? current-flashing-for-merge-frame)
+           (< current-flashing-for-merge-frame
               (* 2 (:flashes-before-merging state))))
       (-> state
           (assoc :current-piece [])
@@ -218,11 +218,11 @@
                             y (:merging-lines state)]
                         {:x x :y y})
                       (concat filled-blocks)))
-          (assoc :current-flashing-frame 0)
-          (update :flashing-before-merge inc))
+          (assoc :current-blinking-frame 0)
+          (update :current-flashing-for-merge-frame inc))
 
-      (and flashing-before-merge
-           (even? flashing-before-merge))
+      (and current-flashing-for-merge-frame
+           (even? current-flashing-for-merge-frame))
       (-> state
           (assoc :tetris.execution/stage :just-merged)
           (assoc :current-piece [])
@@ -241,9 +241,9 @@
                           (recur new-filled others)
                           new-filled)))))
           (update :ticks-per-second inc)
-          (dissoc :current-flashing-frame)
+          (dissoc :current-blinking-frame)
           (dissoc :merging-lines)
-          (dissoc :flashing-before-merge))
+          (dissoc :current-flashing-for-merge-frame))
 
       (completed-lines filled-blocks-with-piece)
       (-> state
@@ -251,8 +251,8 @@
           (assoc :merging-lines (completed-lines filled-blocks-with-piece))
           (assoc :current-piece [])
           (assoc :filled-blocks filled-blocks-with-piece)
-          (assoc :current-flashing-frame 0)
-          (assoc :flashing-before-merge 1))
+          (assoc :current-blinking-frame 0)
+          (assoc :current-flashing-for-merge-frame 1))
 
       :else
       (-> state
@@ -287,7 +287,7 @@
    :board-x 5
    :board-y 5
    :flashes-before-merging 2
-   :frames-before-flashing 3
+   :blinking-frames 3
    :current-piece []
    :next-pieces []
    :piece-generator random-piece
@@ -302,7 +302,7 @@
   (let [state (-> base-state
                   (assoc :current-piece (up (repeat-right 4
                                                           (random-piece))))
-                  (assoc :frames-before-flashing 6)
+                  (assoc :blinking-frames 6)
                   (assoc :ticks-per-second 2)
                   (assoc :size 20)
                   (assoc :next-pieces [(random-piece)
