@@ -57,7 +57,7 @@
                     (update s :y
                             #(- % min-y)))))]
     (= (set normalized-shape)
-       (set block-shape)) ))
+       (set block-shape))))
 
 ;;y  a mais vira x a menos
 ;;x a mais vira y a msi
@@ -102,11 +102,6 @@
             (* y size)
             size
             size)))
-
-(defn can-move? [move-fn {:keys [piece] :as board}]
-  (and (inside? board (move-fn piece))
-       (not (collision? (move-fn piece)
-                        (:tetris.board/filled-blocks board)))))
 
 (defn call-times [f]
   (fn [n x]
@@ -166,8 +161,7 @@
 
       (and (= current-state :ticking-away)
            (tetris.state/piece-inside-board-after-move? down state)
-           (not (collision? (down current-piece)
-                            filled-blocks))
+           (not (tetris.state/collision-after-move? down state))
            (= next-frame 1))
       (-> state
           (update :tetris.board/current-piece down)
@@ -175,8 +169,7 @@
 
       (and (= current-state :ticking-away)
            (tetris.state/piece-inside-board-after-move? down state)
-           (not (collision? (down current-piece)
-                            filled-blocks)))
+           (not (tetris.state/collision-after-move? down state)))
       (-> state
           (assoc :tetris.execution.frames/tick next-frame))
 
@@ -266,8 +259,7 @@
     (if (and (not= :nothing move-fn)
              ;; test without current piece
              (tetris.state/piece-inside-board-after-move? move-fn state)
-             (not (collision? (move-fn current-piece)
-                              (:tetris.board/filled-blocks state))))
+             (not (tetris.state/collision-after-move? move-fn state)))
       (update state :tetris.board/current-piece move-fn)
       state)))
 
