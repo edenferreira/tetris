@@ -96,12 +96,6 @@
                        (set positions2))
      (set positions1)))
 
-(defn board-blocks [{:keys [board-height
-                            board-width]}]
-  (for [y (range -2 board-height)
-        x (range board-width)]
-    {:x x :y y}))
-
 (defn draw-rects! [size positions]
   (doseq [[x y] positions]
     (q/rect (* x size)
@@ -213,7 +207,7 @@
       (-> state
           (assoc :tetris.board/current-piece [])
           (assoc :tetris.board/filled-blocks
-                 (->> (for [x (range (:board-width state))
+                 (->> (for [x (range (:tetris.board/width state))
                             y (:merging-lines state)]
                         {:x x :y y})
                       (concat filled-blocks)))
@@ -280,8 +274,8 @@
 (def base-state
   {:tetris.execution/stage :ticking-away
    :tetris.board/filled-blocks []
-   :board-height 24
-   :board-width 10
+   :tetris.board/height 24
+   :tetris.board/width 10
    :board-x 5
    :board-y 5
    :flashes-before-merging 2
@@ -317,8 +311,8 @@
   (q/fill 220 200 100)
 
   ;; draw board
-  (->> (for [x (range (:board-width state))
-             y (range (:board-height state))
+  (->> (for [x (range (:tetris.board/width state))
+             y (range (:tetris.board/height state))
              :let [x (+ x (:board-x state))
                    y (+ y (:board-y state))]]
          [x y])

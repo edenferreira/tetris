@@ -1,8 +1,9 @@
 (ns tetris.state
   (:require [clojure.set :as set]))
 
-(defn board-blocks [{:keys [board-height
-                            board-width]}]
+(defn board-blocks [{
+                     board-height :tetris.board/height
+                     board-width :tetris.board/width}]
   (for [y (range -2 board-height)
         x (range board-width)]
     {:x x :y y}))
