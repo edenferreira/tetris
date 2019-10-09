@@ -45,8 +45,8 @@
           :tetris.execution.frames/flashing-for-merge
           (>= (* 2 (:flashes-before-merging state)))))
 
-(defn completed-lines? [{:tetris.board/keys [filled-blocks
-                                             current-piece]}]
+(defn completed-lines [{:tetris.board/keys [filled-blocks
+                                            current-piece]}]
   (->> current-piece
        (concat filled-blocks)
        (group-by :y)
@@ -57,15 +57,20 @@
                     (partial map :x)
                     val)))
        (filter (comp (partial <= 55) second))
-       (map first)
-       not-empty))
+       (map first)))
+
+(defn completed-lines? [state]
+  (not-empty (completed-lines state)))
+
+(defn next-frame [{frame-rate :tetris.definition/frame-rate
+                   current-frame :tetris.execution.frames/tick
+                   ticks-per-second :tetris.definition/ticks-per-second}]
+  (inc (mod current-frame
+            (int
+              (/ frame-rate
+                 ticks-per-second)))))
 
 (defn down-piece-frame?
-  [{frame-rate :tetris.definition/frame-rate
-    current-frame :tetris.execution.frames/tick
-    ticks-per-second :tetris.definition/ticks-per-second}]
+  [state]
   (= 1
-     (inc (mod current-frame
-                             (int
-                               (/ frame-rate
-                                  ticks-per-second))))))
+     (next-frame state)))

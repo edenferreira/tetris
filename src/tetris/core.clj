@@ -142,109 +142,103 @@
              ticks-per-second :tetris.definition/ticks-per-second
              current-state :tetris.execution/stage
              :as state}]
-  (let [next-frame (inc (mod current-frame
-                             (int
-                               (/ frame-rate
-                                  ticks-per-second))))
-        filled-blocks-with-piece (concat filled-blocks
-                                         current-piece) ]
-    (cond
-      (tetris.state/just-merge-piece? state)
-      (-> state
-          (assoc :tetris.board/current-piece (->> next-pieces
-                                                  first
-                                                  up
-                                                  (repeat-right 4)))
-          (update :tetris.board/next-pieces (comp vec rest))
-          (update :tetris.board/next-pieces conj (piece-generator))
-          (assoc :tetris.execution/stage :ticking-away)
-          (assoc :tetris.execution.frames/tick 1))
+  (cond
+    (tetris.state/just-merge-piece? state)
+    (-> state
+        (assoc :tetris.board/current-piece (->> next-pieces
+                                                first
+                                                up
+                                                (repeat-right 4)))
+        (update :tetris.board/next-pieces (comp vec rest))
+        (update :tetris.board/next-pieces conj (piece-generator))
+        (assoc :tetris.execution/stage :ticking-away)
+        (assoc :tetris.execution.frames/tick 1))
 
-      (and (tetris.state/ticking-away? state)
-           (tetris.state/piece-inside-board-after-move? down state)
-           (not (tetris.state/collision-after-move? down state))
-           (tetris.state/down-piece-frame? state))
-      (-> state
-          (update :tetris.board/current-piece down)
-          (assoc :tetris.execution.frames/tick next-frame))
+    (and (tetris.state/ticking-away? state)
+         (tetris.state/piece-inside-board-after-move? down state)
+         (not (tetris.state/collision-after-move? down state))
+         (tetris.state/down-piece-frame? state))
+    (-> state
+        (update :tetris.board/current-piece down)
+        (assoc :tetris.execution.frames/tick (tetris.state/next-frame state)))
 
-      (and (tetris.state/ticking-away? state)
-           (tetris.state/piece-inside-board-after-move? down state)
-           (not (tetris.state/collision-after-move? down state)))
-      (-> state
-          (assoc :tetris.execution.frames/tick next-frame))
+    (and (tetris.state/ticking-away? state)
+         (tetris.state/piece-inside-board-after-move? down state)
+         (not (tetris.state/collision-after-move? down state)))
+    (-> state
+        (assoc :tetris.execution.frames/tick (tetris.state/next-frame state)))
 
-      (tetris.state/continue-blinking? state)
-      (update state :tetris.execution.frames/blinking inc)
+    (tetris.state/continue-blinking? state)
+    (update state :tetris.execution.frames/blinking inc)
 
-      (and (tetris.state/frame-for-flash-off? state)
-           (tetris.state/completed-lines? state))
-      (-> state
-          (assoc :tetris.board/current-piece [])
-          (update :tetris.board/filled-blocks
-                  (partial
-                    remove
-                    (comp
-                      (set (completed-lines filled-blocks-with-piece))
-                      :y)))
-          (assoc :tetris.execution.frames/blinking 0)
-          (update :tetris.execution.frames/flashing-for-merge inc))
+    (and (tetris.state/frame-for-flash-off? state)
+         (tetris.state/completed-lines? state))
+    (-> state
+        (assoc :tetris.board/current-piece [])
+        (update :tetris.board/filled-blocks
+                (partial
+                  remove
+                  (comp
+                    (set (tetris.state/completed-lines state))
+                    :y)))
+        (assoc :tetris.execution.frames/blinking 0)
+        (update :tetris.execution.frames/flashing-for-merge inc))
 
-      (and (tetris.state/frame-for-flash-on? state)
-           (not (tetris.state/merge-frame? state)))
-      (-> state
-          (assoc :tetris.board/current-piece [])
-          (assoc :tetris.board/filled-blocks
-                 (->> (for [x (range (:tetris.board/width state))
-                            y (:merging-lines state)]
-                        {:x x :y y})
-                      (concat filled-blocks)))
-          (assoc :tetris.execution.frames/blinking 0)
-          (update :tetris.execution.frames/flashing-for-merge inc))
+    (and (tetris.state/frame-for-flash-on? state)
+         (not (tetris.state/merge-frame? state)))
+    (-> state
+        (assoc :tetris.board/current-piece [])
+        (assoc :tetris.board/filled-blocks
+          (->> (for [x (range (:tetris.board/width state))
+                     y (:merging-lines state)]
+                 {:x x :y y})
+               (concat filled-blocks)))
+        (assoc :tetris.execution.frames/blinking 0)
+        (update :tetris.execution.frames/flashing-for-merge inc))
 
-      (and (tetris.state/frame-for-flash-on? state)
-           (tetris.state/merge-frame? state))
-      (-> state
-          (assoc :tetris.execution/stage :just-merged)
-          (assoc :tetris.board/current-piece [])
-          (update :tetris.board/filled-blocks
-                  (fn [filled-blocks]
-                    (loop [filled-blocks filled-blocks
-                           [merging & others]
-                           (sort (:merging-lines state))]
-                      (let [new-filled
-                            (->> filled-blocks
-                                 (map #(if (< (:y %)
-                                              merging)
-                                         (update % :y inc)
-                                         %)))]
-                        (if others
-                          (recur new-filled others)
-                          new-filled)))))
-          (update :tetris.definition/ticks-per-second inc)
-          (dissoc :tetris.execution.frames/blinking)
-          (dissoc :merging-lines)
-          (dissoc :tetris.execution.frames/flashing-for-merge))
+    (and (tetris.state/frame-for-flash-on? state)
+         (tetris.state/merge-frame? state))
+    (-> state
+        (assoc :tetris.execution/stage :just-merged)
+        (assoc :tetris.board/current-piece [])
+        (update :tetris.board/filled-blocks
+                (fn [filled-blocks]
+                  (loop [filled-blocks filled-blocks
+                         [merging & others]
+                         (sort (:merging-lines state))]
+                    (let [new-filled
+                          (->> filled-blocks
+                               (map #(if (< (:y %)
+                                            merging)
+                                       (update % :y inc)
+                                       %)))]
+                      (if others
+                        (recur new-filled others)
+                        new-filled)))))
+        (update :tetris.definition/ticks-per-second inc)
+        (dissoc :tetris.execution.frames/blinking)
+        (dissoc :merging-lines)
+        (dissoc :tetris.execution.frames/flashing-for-merge))
 
-      (tetris.state/completed-lines? state)
-      (-> state
-          (assoc :tetris.execution/stage :flashing-for-merge)
-          (assoc :merging-lines (completed-lines filled-blocks-with-piece))
-          (assoc :tetris.board/current-piece [])
-          (assoc :tetris.board/filled-blocks filled-blocks-with-piece)
-          (assoc :tetris.execution.frames/blinking 0)
-          (assoc :tetris.execution.frames/flashing-for-merge 1))
+    (tetris.state/completed-lines? state)
+    (-> state
+        (assoc :tetris.execution/stage :flashing-for-merge)
+        (assoc :merging-lines (tetris.state/completed-lines state))
+        (assoc :tetris.board/current-piece [])
+        (assoc :tetris.board/filled-blocks (concat filled-blocks current-piece))
+        (assoc :tetris.execution.frames/blinking 0)
+        (assoc :tetris.execution.frames/flashing-for-merge 1))
 
-      :else
-      (-> state
-          (assoc :tetris.board/current-piece [])
-          (assoc :tetris.board/filled-blocks filled-blocks-with-piece)
-          (assoc :tetris.execution/stage :just-merged-piece)
-          (assoc :tetris.execution.frames/tick next-frame)))))
+    :else
+    (-> state
+        (assoc :tetris.board/current-piece [])
+        (assoc :tetris.board/filled-blocks (concat filled-blocks current-piece))
+        (assoc :tetris.execution/stage :just-merged-piece)
+        (assoc :tetris.execution.frames/tick (tetris.state/next-frame state)))))
 
 (defn key-pressed [{current-piece :tetris.board/current-piece
                     :as state}
-                  {:keys [key]}]
+                   {:keys [key]}]
   (let [move-fn (case key
                   :right right
                   :left left
@@ -285,9 +279,9 @@
                   (assoc :tetris.definition/ticks-per-second 2)
                   (assoc :tetris.definition/size 20)
                   (assoc :tetris.board/next-pieces [(random-piece)
-                                       (random-piece)
-                                       (random-piece)
-                                       (random-piece)]))]
+                                                    (random-piece)
+                                                    (random-piece)
+                                                    (random-piece)]))]
     (reset! states [state])
     state))
 
@@ -357,21 +351,21 @@
 
 (defn main []
   (q/defsketch tetris
-    :title "You spin my circle right round"
-    :size [500 800]
-    :setup (fn []
-             (events/start! {} (setup)))
-    :update (fn [state]
-              (events/new! :event.type/tick
-                           {}
-                           (tick state)))
-    :draw draw-state
-    :features [:keep-on-top]
-    :key-pressed (fn [state context]
-                   (events/new! :event.type/key-pressed
-                                context
-                                (key-pressed state context)))
-    ; This sketch uses functional-mode middleware.
-    ; Check quil wiki for more info about middlewares and particularly
-    ; fun-mode.
-    :middleware [m/fun-mode]))
+               :title "You spin my circle right round"
+               :size [500 800]
+               :setup (fn []
+                        (events/start! {} (setup)))
+               :update (fn [state]
+                         (events/new! :event.type/tick
+                                      {}
+                                      (tick state)))
+               :draw draw-state
+               :features [:keep-on-top]
+               :key-pressed (fn [state context]
+                              (events/new! :event.type/key-pressed
+                                           context
+                                           (key-pressed state context)))
+               ; This sketch uses functional-mode middleware.
+               ; Check quil wiki for more info about middlewares and particularly
+               ; fun-mode.
+               :middleware [m/fun-mode]))
