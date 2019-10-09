@@ -2,6 +2,7 @@
   (:require [quil.core :as q]
             [quil.middleware :as m]
             [tetris.state]
+            [events]
             [clojure.set :as set]))
 
 ;; TODOs
@@ -364,14 +365,18 @@
   (q/defsketch tetris
     :title "You spin my circle right round"
     :size [500 800]
-    :setup setup
+    :setup (fn []
+             (events/start! {} (setup)))
     :update (fn [state]
-              (let [new-state (tick state)]
-                (swap! states conj new-state)
-                new-state))
+              (events/new! :event.type/tick
+                           {}
+                           (tick state)))
     :draw draw-state
     :features [:keep-on-top]
-    :key-pressed key-pressed
+    :key-pressed (fn [state context] 
+                   (events/new! :event.type/key-pressed
+                                context
+                                (key-pressed state context)))
     ; This sketch uses functional-mode middleware.
     ; Check quil wiki for more info about middlewares and particularly
     ; fun-mode.

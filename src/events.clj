@@ -2,17 +2,17 @@
 
 (def log (atom []))
 
-(defn start-events! [payload state]
- (swap! events 
-        (constantly
-         [:event.type/start payload state]))
+(defn start! [payload state]
+  (reset! log
+          [[:event.type/start payload state]])
+  state)
 
-(defn new-event! [event payload state]
- (swap! events conj 
-               [event
-                payload
-                state])
- state)
+(defn new! [event payload state]
+  (swap! log
+         conj
+         [event payload state])
+  state)
 
-(defn dump-events! [name]
-  (spit (str "./events-" name ".edn") (prn-str @log)))
+(defn dump! [name]
+  (spit (str "./events-" name ".edn")
+        (prn-str @log)))

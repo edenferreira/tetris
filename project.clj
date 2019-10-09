@@ -9,6 +9,8 @@
   :aliases {"kaocha" ["with-profile" "+kaocha" "run" "-m" "kaocha.runner"]
             "test"   ["kaocha"]}
 
-  :profiles {:dev {:dependencies [[lambdaisland/kaocha "0.0-541"]]
+  :profiles {:dev {:dependencies [[lambdaisland/kaocha "0.0-541"]
+                                  [org.clojure/tools.namespace "0.2.11"]
+                                  [com.stuartsierra/component.repl "0.2.0"]]
                    :source-paths ["dev"]}
              :kaocha {:dependencies [[lambdaisland/kaocha "0.0-541"]]}})
