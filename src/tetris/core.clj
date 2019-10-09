@@ -149,7 +149,7 @@
         filled-blocks-with-piece (concat filled-blocks
                                          current-piece) ]
     (cond
-      (= :just-merged-piece current-state)
+      (tetris.state/just-merge-piece? state)
       (-> state
           (assoc :tetris.board/current-piece (->> next-pieces
                                                   first
@@ -160,7 +160,7 @@
           (assoc :tetris.execution/stage :ticking-away)
           (assoc :tetris.execution.frames/tick 1))
 
-      (and (= current-state :ticking-away)
+      (and (tetris.state/ticking-away? state)
            (tetris.state/piece-inside-board-after-move? down state)
            (not (tetris.state/collision-after-move? down state))
            (= next-frame 1))
@@ -168,7 +168,7 @@
           (update :tetris.board/current-piece down)
           (assoc :tetris.execution.frames/tick next-frame))
 
-      (and (= current-state :ticking-away)
+      (and (tetris.state/ticking-away? state)
            (tetris.state/piece-inside-board-after-move? down state)
            (not (tetris.state/collision-after-move? down state)))
       (-> state
@@ -373,7 +373,7 @@
                            (tick state)))
     :draw draw-state
     :features [:keep-on-top]
-    :key-pressed (fn [state context] 
+    :key-pressed (fn [state context]
                    (events/new! :event.type/key-pressed
                                 context
                                 (key-pressed state context)))
