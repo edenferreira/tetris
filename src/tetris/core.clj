@@ -128,6 +128,11 @@
        (map first)
        not-empty))
 
+(defn putting-piece-just-outside-board [piece]
+  (let [max-y (->> piece (map :y) (apply max))
+        diff (- 0 1 max-y)]
+    (map #(update % :y + diff) piece)))
+
 (def states (atom {}))
 
 (defn tick [{current-piece :tetris.board/current-piece
@@ -147,7 +152,7 @@
     (-> state
         (assoc :tetris.board/current-piece (->> next-pieces
                                                 first
-                                                up
+                                                putting-piece-just-outside-board
                                                 (repeat-right 4)))
         (update :tetris.board/next-pieces (comp vec rest))
         (update :tetris.board/next-pieces conj (piece-generator))
@@ -273,8 +278,10 @@
   (q/frame-rate 60)
   (q/color-mode :hsb)
   (let [state (-> base-state
-                  (assoc :tetris.board/current-piece (up (repeat-right 4
-                                                                       (random-piece))))
+                  (assoc :tetris.board/current-piece
+                    (putting-piece-just-outside-board
+                      (repeat-right 4
+                                    (random-piece))))
                   (assoc :tetris.definition/blinking-frames 6)
                   (assoc :tetris.definition/ticks-per-second 2)
                   (assoc :tetris.definition/size 20)
@@ -337,6 +344,7 @@
                       (comp (partial +
                                      (:board-y state))
                             second)))
+           not-empty
            (draw-rects! (:tetris.definition/size state)))
 
   ;; draw filled blocks

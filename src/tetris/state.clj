@@ -12,7 +12,6 @@
                                                            height
                                                            current-piece]}]
   (let [after-move (move-fn current-piece)
-        min-y (->> after-move (map :y) (apply min))
         max-y (->> after-move (map :y) (apply max))
         min-x (->> after-move (map :x) (apply min))
         max-x (->> after-move (map :x) (apply max))]
