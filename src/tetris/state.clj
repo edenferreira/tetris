@@ -32,6 +32,10 @@
   (= :ticking-away
      (:tetris.execution/stage state)))
 
+(defn preparing-to-merged-piece? [state]
+  (= :preparing-to-merged-piece
+     (:tetris.execution/stage state)))
+
 (defn continue-blinking?
   [{current-flashing-for-merge-frame :tetris.execution.frames/flashing-for-merge
     blinking-frames :tetris.definition/blinking-frames
@@ -40,6 +44,13 @@
        current-blinking-frame
        (< current-blinking-frame
           blinking-frames)))
+
+(defn merge-piece?
+  [{:tetris.execution.frames/keys [before-merge]
+    :tetris.definition/keys [frames-before-merge]
+    :or {before-merge 0}}]
+  (<= frames-before-merge
+      before-merge))
 
 (defn frame-for-flash-off? [state]
   (some-> state :tetris.execution.frames/flashing-for-merge odd?))
@@ -81,3 +92,8 @@
   [state]
   (= 1
      (next-frame state)))
+
+(defn putting-piece-just-outside-board [piece]
+  (let [max-y (->> piece (map :y) (apply max))
+        diff (- 0 1 max-y)]
+    (map #(update % :y + diff) piece)))

@@ -10,6 +10,7 @@
 ;; create points
 ;; improve the game over
 ;; better setup, and test the keys of configuration
+;; only permit moving the piece after it got in the board
 
 (def insert-first
   (comp
@@ -234,12 +235,24 @@
         (assoc :tetris.execution.frames/blinking 0)
         (assoc :tetris.execution.frames/flashing-for-merge 1))
 
-    :else
+    (and (tetris.state/merge-piece? state)
+         (tetris.state/preparing-to-merged-piece? state))
     (-> state
         (assoc :tetris.board/current-piece [])
         (assoc :tetris.board/filled-blocks (concat filled-blocks current-piece))
         (assoc :tetris.execution/stage :just-merged-piece)
-        (assoc :tetris.execution.frames/tick (tetris.state/next-frame state)))))
+        (dissoc :tetris.execution.frames/before-merge)
+        (assoc :tetris.execution.frames/tick (tetris.state/next-frame state)))
+
+    (and (not (tetris.state/merge-piece? state))
+         (tetris.state/preparing-to-merged-piece? state))
+    (-> state
+        (update :tetris.execution.frames/before-merge inc))
+
+    :else
+    (-> state
+        (assoc :tetris.execution/stage :preparing-to-merged-piece)
+        (assoc :tetris.execution.frames/before-merge 0))))
 
 (defn key-pressed [{current-piece :tetris.board/current-piece
                     :as state}
@@ -252,6 +265,7 @@
                   :nothing)]
     (if (and (not= :nothing move-fn)
              ;; test without current piece
+             (seq current-piece)
              (tetris.state/piece-inside-board-after-move? move-fn state)
              (not (tetris.state/collision-after-move? move-fn state)))
       (update state :tetris.board/current-piece move-fn)
@@ -271,6 +285,7 @@
    :tetris.generators/piece random-piece
    :tetris.definition/ticks-per-second 1
    :tetris.execution.frames/tick 1
+   :tetris.definition/frames-before-merge 3
    :tetris.definition/frame-rate 60
    :tetris.definition/size 15})
 
@@ -285,6 +300,7 @@
                   (assoc :tetris.definition/blinking-frames 6)
                   (assoc :tetris.definition/ticks-per-second 2)
                   (assoc :tetris.definition/size 20)
+                  (assoc :tetris.definition/frames-before-merge 15)
                   (assoc :tetris.board/next-pieces [(random-piece)
                                                     (random-piece)
                                                     (random-piece)

@@ -85,20 +85,22 @@
                                                {:x 1 :y 2}]))))
 
   (is (= (assoc base-state
-                :tetris.execution/stage :just-merged-piece
-                :tetris.execution.frames/tick 41
-                :tetris.board/filled-blocks [{:x 0 :y 22}
-                                             {:x 0 :y 21}
-                                             {:x 0 :y 23}
-                                             {:x 1 :y 23}])
+                :tetris.execution/stage :preparing-to-merged-piece
+                :tetris.execution.frames/before-merge 0
+                :tetris.board/filled-blocks (for [x (range 1 9)
+                                                    y (range 22 24)]
+                                                {:x x :y y})
+                  :tetris.board/current-piece [{:x 9 :y 22}
+                                               {:x 9 :y 23}])
          (tetris/tick
            (assoc base-state
                   :tetris.execution/stage :ticking-away
-                  :tetris.execution.frames/tick 40
-                  :tetris.board/current-piece [{:x 0 :y 22}
-                                               {:x 0 :y 21}
-                                               {:x 0 :y 23}
-                                               {:x 1 :y 23}]))))
+                  :tetris.definition/frames-before-merge 3
+                  :tetris.board/filled-blocks (for [x (range 1 9)
+                                                    y (range 22 24)]
+                                                {:x x :y y})
+                  :tetris.board/current-piece [{:x 9 :y 22}
+                                               {:x 9 :y 23}]))))
 
   (is (= (assoc base-state
                 :tetris.execution/stage :just-merged-piece
@@ -108,7 +110,9 @@
                                               {:x x :y y}))
          (tetris/tick
            (assoc base-state
-                  :tetris.execution/stage :ticking-away
+                  :tetris.execution/stage :preparing-to-merged-piece
+                  :tetris.definition/frames-before-merge 3
+                  :tetris.execution.frames/before-merge 3
                   :tetris.board/filled-blocks (for [x (range 1 9)
                                                     y (range 22 24)]
                                                 {:x x :y y})
@@ -246,8 +250,8 @@
                                                {:x 0 :y 21}
                                                {:x 0 :y 23}
                                                {:x 1 :y 23}]
-                  :tetris.board/current-piece [{:x 4 :y 0}
-                                               {:x 4 :y 1}]
+                  :tetris.board/current-piece [{:x 4 :y -2}
+                                               {:x 4 :y -1}]
                   :tetris.board/next-pieces [[{:x 0 :y 1}
                                               {:x 0 :y 0}]]
                   :tetris.generators/piece piece-generator)
@@ -341,4 +345,28 @@
                                                {:x 8 :y 1}]
                   :tetris.board/current-piece [{:x 7 :y 0}
                                                {:x 7 :y 1}])
-           {:key :right}))))
+           {:key :right})))
+
+  (is (= (assoc base-state
+                :tetris.execution/stage :preparing-to-merged-piece
+                :tetris.execution.frames/before-merge 0
+                :tetris.board/filled-blocks (for [x (range 1 5)
+                                                  y (range 22 24)]
+                                                {:x x :y y})
+                  :tetris.board/current-piece [{:x 8 :y 22}
+                                               {:x 8 :y 23}])
+         (tetris/key-pressed
+           (assoc base-state
+                :tetris.execution/stage :preparing-to-merged-piece
+                :tetris.execution.frames/before-merge 0
+                :tetris.board/filled-blocks (for [x (range 1 5)
+                                                  y (range 22 24)]
+                                                {:x x :y y})
+                  :tetris.board/current-piece [{:x 9 :y 22}
+                                               {:x 9 :y 23}])
+           {:key :left})))
+
+  (is (= (assoc base-state :tetris.board/current-piece [])
+         (tetris/key-pressed
+           (assoc base-state :tetris.board/current-piece [])
+           {:key :left}))))
