@@ -24,3 +24,38 @@
 (defn ticking-away? [state]
   (= :ticking-away
      (:tetris.execution/stage state)))
+
+(defn continue-blinking?
+  [{current-flashing-for-merge-frame :tetris.execution.frames/flashing-for-merge
+    blinking-frames :tetris.definition/blinking-frames
+    current-blinking-frame :tetris.execution.frames/blinking}]
+  (and current-flashing-for-merge-frame
+       current-blinking-frame
+       (< current-blinking-frame
+          blinking-frames)))
+
+(defn frame-for-flash-off? [state]
+  (some-> state :tetris.execution.frames/flashing-for-merge odd?))
+
+(defn frame-for-flash-on? [state]
+  (some-> state :tetris.execution.frames/flashing-for-merge even?))
+
+(defn merge-frame? [state]
+  (some-> state
+          :tetris.execution.frames/flashing-for-merge
+          (>= (* 2 (:flashes-before-merging state)))))
+
+(defn completed-lines? [{:tetris.board/keys [filled-blocks
+                                             current-piece]}]
+  (->> current-piece
+       (concat filled-blocks)
+       (group-by :y)
+       (map (juxt key
+                  (comp
+                    (partial apply +)
+                    (partial map inc)
+                    (partial map :x)
+                    val)))
+       (filter (comp (partial <= 55) second))
+       (map first)
+       not-empty))

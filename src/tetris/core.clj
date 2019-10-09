@@ -174,15 +174,11 @@
       (-> state
           (assoc :tetris.execution.frames/tick next-frame))
 
-      (and current-flashing-for-merge-frame
-           current-blinking-frame
-           (< current-blinking-frame
-              blinking-frames))
+      (tetris.state/continue-blinking? state)
       (update state :tetris.execution.frames/blinking inc)
 
-      (and current-flashing-for-merge-frame
-           (odd? current-flashing-for-merge-frame)
-           (completed-lines filled-blocks-with-piece))
+      (and (tetris.state/frame-for-flash-off? state)
+           (tetris.state/completed-lines? state))
       (-> state
           (assoc :tetris.board/current-piece [])
           (update :tetris.board/filled-blocks
@@ -194,10 +190,8 @@
           (assoc :tetris.execution.frames/blinking 0)
           (update :tetris.execution.frames/flashing-for-merge inc))
 
-      (and current-flashing-for-merge-frame
-           (even? current-flashing-for-merge-frame)
-           (< current-flashing-for-merge-frame
-              (* 2 (:flashes-before-merging state))))
+      (and (tetris.state/frame-for-flash-on? state)
+           (not (tetris.state/merge-frame? state)))
       (-> state
           (assoc :tetris.board/current-piece [])
           (assoc :tetris.board/filled-blocks
@@ -208,8 +202,8 @@
           (assoc :tetris.execution.frames/blinking 0)
           (update :tetris.execution.frames/flashing-for-merge inc))
 
-      (and current-flashing-for-merge-frame
-           (even? current-flashing-for-merge-frame))
+      (and (tetris.state/frame-for-flash-on? state)
+           (tetris.state/merge-frame? state))
       (-> state
           (assoc :tetris.execution/stage :just-merged)
           (assoc :tetris.board/current-piece [])
@@ -232,7 +226,7 @@
           (dissoc :merging-lines)
           (dissoc :tetris.execution.frames/flashing-for-merge))
 
-      (completed-lines filled-blocks-with-piece)
+      (tetris.state/completed-lines? state)
       (-> state
           (assoc :tetris.execution/stage :flashing-for-merge)
           (assoc :merging-lines (completed-lines filled-blocks-with-piece))
