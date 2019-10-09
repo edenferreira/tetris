@@ -163,7 +163,7 @@
       (and (tetris.state/ticking-away? state)
            (tetris.state/piece-inside-board-after-move? down state)
            (not (tetris.state/collision-after-move? down state))
-           (= next-frame 1))
+           (tetris.state/down-piece-frame? state))
       (-> state
           (update :tetris.board/current-piece down)
           (assoc :tetris.execution.frames/tick next-frame))

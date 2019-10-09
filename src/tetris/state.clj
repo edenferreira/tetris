@@ -59,3 +59,13 @@
        (filter (comp (partial <= 55) second))
        (map first)
        not-empty))
+
+(defn down-piece-frame?
+  [{frame-rate :tetris.definition/frame-rate
+    current-frame :tetris.execution.frames/tick
+    ticks-per-second :tetris.definition/ticks-per-second}]
+  (= 1
+     (inc (mod current-frame
+                             (int
+                               (/ frame-rate
+                                  ticks-per-second))))))
