@@ -7,10 +7,18 @@
         x (range board-width)]
     {:x x :y y}))
 
-(defn piece-inside-board-after-move? [move-fn state]
-  (= (set/intersection (set (move-fn (:tetris.board/current-piece state)))
-                       (set (board-blocks state)))
-     (set (move-fn (:tetris.board/current-piece state)))))
+(defn piece-inside-board-after-move? [move-fn
+                                      {:tetris.board/keys [width
+                                                           height
+                                                           current-piece]}]
+  (let [after-move (move-fn current-piece)
+        min-y (->> after-move (map :y) (apply min))
+        max-y (->> after-move (map :y) (apply max))
+        min-x (->> after-move (map :x) (apply min))
+        max-x (->> after-move (map :x) (apply max))]
+    (and (< max-y height)
+         (< max-x width)
+         (<= 0 min-x))))
 
 (defn collision-after-move? [move-fn state]
   (seq
