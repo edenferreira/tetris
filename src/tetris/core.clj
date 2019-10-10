@@ -296,7 +296,7 @@
 
 (defn setup []
   (q/frame-rate 60)
-  (q/color-mode :hsb)
+  (q/color-mode :rgb)
   (let [state (-> base-state
                   (assoc :tetris.board/current-piece
                     (putting-piece-just-outside-board
@@ -316,11 +316,11 @@
 ;; shapes should be a calculation, and not defined
 (defn draw-state [state]
 
-  (q/background 240)
+  (q/background 255 255 255)
 
   (if (tetris.state/game-over? state)
-    (q/fill 120 200 250)
-    (q/fill 220 200 100))
+    (q/fill 255 180 180)
+    (q/fill 180 180 255))
 
   ;; draw board
   (->> (for [x (range (:tetris.board/width state))
@@ -332,8 +332,8 @@
 
 
   (if (tetris.state/game-over? state)
-    (q/fill 120 100 250)
-    (q/fill 220 200 240))
+    (q/fill 255 0 0)
+    (q/fill 0 0 255))
 
   ;; draw next pieces
   (-> (:tetris.board/next-pieces state)
