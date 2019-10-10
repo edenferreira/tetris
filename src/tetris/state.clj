@@ -36,6 +36,10 @@
   (= :preparing-to-merged-piece
      (:tetris.execution/stage state)))
 
+(defn game-over? [state]
+  (= :game-over
+     (:tetris.execution/stage state)))
+
 (defn continue-blinking?
   [{current-flashing-for-merge-frame :tetris.execution.frames/flashing-for-merge
     blinking-frames :tetris.definition/blinking-frames
@@ -97,3 +101,25 @@
   (let [max-y (->> piece (map :y) (apply max))
         diff (- 0 1 max-y)]
     (map #(update % :y + diff) piece)))
+
+(defn completed-columns? [{:tetris.board/keys [filled-blocks
+                                              current-piece]}]
+  (->> filled-blocks
+       (map :y)
+       distinct
+       (mapcat #(map vector
+                     (range 24)
+                     (repeat %)))
+       (map (fn [[x y]] {:x x :y y}))
+       (concat current-piece)
+       (group-by :x)
+       (map (juxt key
+                  (comp
+                    (partial apply +)
+                    (partial remove neg?)
+                    (partial map inc)
+                    (partial map :y)
+                    val)))
+       (filter (comp (partial <= 300) second))
+       (map first)
+       seq))

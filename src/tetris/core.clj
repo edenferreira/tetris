@@ -11,6 +11,7 @@
 ;; improve the game over
 ;; better setup, and test the keys of configuration
 ;; only permit moving the piece after it got in the board
+;; document tests
 
 (def insert-first
   (comp
@@ -149,6 +150,10 @@
              current-state :tetris.execution/stage
              :as state}]
   (cond
+    (tetris.state/completed-columns? state)
+    (-> state
+        (assoc :tetris.execution/stage :game-over))
+
     (tetris.state/just-merge-piece? state)
     (-> state
         (assoc :tetris.board/current-piece (->> next-pieces
@@ -312,7 +317,10 @@
 (defn draw-state [state]
 
   (q/background 240)
-  (q/fill 220 200 100)
+
+  (if (tetris.state/game-over? state)
+    (q/fill 120 200 250)
+    (q/fill 220 200 100))
 
   ;; draw board
   (->> (for [x (range (:tetris.board/width state))
@@ -322,7 +330,10 @@
          [x y])
        (draw-rects! (:tetris.definition/size state)))
 
-  (q/fill 220 200 240)
+
+  (if (tetris.state/game-over? state)
+    (q/fill 120 100 250)
+    (q/fill 220 200 240))
 
   ;; draw next pieces
   (-> (:tetris.board/next-pieces state)

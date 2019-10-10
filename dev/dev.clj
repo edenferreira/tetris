@@ -21,6 +21,7 @@
    [com.stuartsierra.component :as component]
    [com.stuartsierra.component.repl :refer [reset set-init start stop system]]
    [tetris.core :as tetris]
+   [tetris.state]
    [kaocha.repl :as kaocha]
    [events]))
 

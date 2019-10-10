@@ -88,7 +88,7 @@
                 :tetris.execution/stage :preparing-to-merged-piece
                 :tetris.execution.frames/before-merge 0
                 :tetris.board/filled-blocks (for [x (range 1 9)
-                                                    y (range 22 24)]
+                                                  y (range 22 24)]
                                                 {:x x :y y})
                   :tetris.board/current-piece [{:x 9 :y 22}
                                                {:x 9 :y 23}])
@@ -101,6 +101,50 @@
                                                 {:x x :y y})
                   :tetris.board/current-piece [{:x 9 :y 22}
                                                {:x 9 :y 23}]))))
+
+  (is (= (assoc base-state
+                :tetris.execution/stage :game-over
+                :tetris.board/filled-blocks (for [x (range 3 6)
+                                                    y (range 1 24)]
+                                                {:x x :y y})
+                :tetris.board/current-piece [{:x 3 :y -2}
+                                             {:x 3 :y -1}
+                                             {:x 3 :y 0}])
+         (tetris/tick
+           (assoc base-state
+                  :tetris.execution/stage :ticking-away
+                  :tetris.board/filled-blocks (for [x (range 3 6)
+                                                    y (range 1 24)]
+                                                {:x x :y y})
+                  :tetris.board/current-piece [{:x 3 :y -2}
+                                               {:x 3 :y -1}
+                                               {:x 3 :y 0}]))))
+
+  (is (= (assoc base-state
+                :tetris.execution/stage :game-over
+                :tetris.board/filled-blocks (concat
+                                              (for [x (range 3 6)
+                                                    y (range 3 24)]
+                                                {:x x :y y})
+                                              (for [x (range 1 4)
+                                                    y (range 1 3)]
+                                                {:x x :y y}))
+                :tetris.board/current-piece [{:x 1 :y -2}
+                                             {:x 1 :y -1}
+                                             {:x 1 :y 0}])
+         (tetris/tick
+           (assoc base-state
+                  :tetris.execution/stage :ticking-away
+                :tetris.board/filled-blocks (concat
+                                              (for [x (range 3 6)
+                                                    y (range 3 24)]
+                                                {:x x :y y})
+                                              (for [x (range 1 4)
+                                                    y (range 1 3)]
+                                                {:x x :y y}))
+                :tetris.board/current-piece [{:x 1 :y -2}
+                                             {:x 1 :y -1}
+                                             {:x 1 :y 0}]))))
 
   (is (= (assoc base-state
                 :tetris.execution/stage :just-merged-piece
