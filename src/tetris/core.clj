@@ -140,14 +140,7 @@
 (defn tick [{current-piece :tetris.board/current-piece
              next-pieces :tetris.board/next-pieces
              piece-generator :tetris.generators/piece
-             current-frame :tetris.execution.frames/tick
-             frame-rate :tetris.definition/frame-rate
              filled-blocks :tetris.board/filled-blocks
-             current-flashing-for-merge-frame :tetris.execution.frames/flashing-for-merge
-             blinking-frames :tetris.definition/blinking-frames
-             current-blinking-frame :tetris.execution.frames/blinking
-             ticks-per-second :tetris.definition/ticks-per-second
-             current-state :tetris.execution/stage
              :as state}]
   (cond
     (tetris.state/completed-columns? state)
@@ -384,7 +377,7 @@
                             :y)))
            (draw-rects! (:tetris.definition/size state))))
 
-(defn main []
+(defn -main [& _args]
   (q/defsketch tetris
                :title "You spin my circle right round"
                :size [500 800]
